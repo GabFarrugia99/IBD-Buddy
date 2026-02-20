@@ -9,6 +9,7 @@
     <meta name="theme-color" content="#0f1419">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <title>UC Companion - Daily Tracker</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -386,6 +387,7 @@
                 </div>
                 <button class="export-btn" onclick="exportData()">Export JSON</button>
                 <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+                <button class="export-btn" onclick="exportPDF()">Export PDF Report</button>
             </div>
         </div>
     </div>
@@ -826,6 +828,114 @@
             a.download = 'uc-data-' + new Date().toISOString().split('T')[0] + '.csv';
             a.click();
             URL.revokeObjectURL(url);
+        }
+
+        function exportPDF() {
+            if (allEntries.length === 0) { alert('No data to export!'); return; }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Title
+            doc.setFontSize(20);
+            doc.text('UC Companion - Health Report', 20, 20);
+            
+            // Patient info
+            doc.setFontSize(12);
+            doc.text('Generated: ' + new Date().toLocaleDateString(), 20, 35);
+            doc.text('Total Entries: ' + allEntries.length, 20, 45);
+            
+            // Summary stats
+            let yPos = 60;
+            doc.setFontSize(14);
+            doc.text('Summary Statistics', 20, yPos);
+            yPos += 10;
+            
+            doc.setFontSize(10);
+            const avgWellbeing = allEntries.filter(e => e.wellbeing).reduce((sum, e) => sum + e.wellbeing, 0) / allEntries.filter(e => e.wellbeing).length || 0;
+            const avgBathroom = allEntries.reduce((sum, e) => sum + (e.bathroomCount || 0), 0) / allEntries.length;
+            
+            doc.text('Average Wellbeing: ' + avgWellbeing.toFixed(1) + '/5', 20, yPos);
+            yPos += 7;
+            doc.text('Average Bathroom Visits: ' + avgBathroom.toFixed(1), 20, yPos);
+            yPos += 15;
+            
+            // Recent entries
+            doc.setFontSize(14);
+            doc.text('Recent Entries (Last 14 Days)', 20, yPos);
+            yPos += 10;
+            
+            doc.setFontSize(9);
+            const recentEntries = allEntries.slice(0, 14);
+            
+            recentEntries.forEach(function(entry) {
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const date = new Date(entry.date).toLocaleDateString();
+                let symptoms = [];
+                for (let key in entry.symptoms) {
+                    if (entry.symptoms[key].active) symptoms.push(key);
+                }
+                
+                doc.setFont(undefined, 'bold');
+                doc.text(date + ' - Wellbeing: ' + (entry.wellbeing || '-') + '/5', 20, yPos);
+                yPos += 6;
+                
+                doc.setFont(undefined, 'normal');
+                doc.text('Bathroom: ' + (entry.bathroomCount || 0) + ' | Symptoms: ' + (symptoms.join(', ') || 'None'), 20, yPos);
+                yPos += 6;
+                
+                if (entry.bristol) {
+                    const bristolTypes = ['', 'Severe constipation', 'Mild constipation', 'Normal', 'Normal (ideal)', 'Lacking fiber', 'Mild diarrhea', 'Severe diarrhea'];
+                    doc.text('Stool: Type ' + entry.bristol + ' - ' + bristolTypes[entry.bristol], 20, yPos);
+                    yPos += 6;
+                }
+                
+                if (entry.foods && entry.foods.length > 0) {
+                    doc.text('Foods: ' + entry.foods.join(', '), 20, yPos);
+                    yPos += 6;
+                }
+                
+                if (entry.notes) {
+                    const notes = entry.notes.length > 80 ? entry.notes.substring(0, 80) + '...' : entry.notes;
+                    doc.text('Notes: ' + notes, 20, yPos);
+                    yPos += 6;
+                }
+                
+                yPos += 4;
+            });
+            
+            // Medications section
+            if (medications.length > 0) {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                yPos += 10;
+                doc.setFontSize(14);
+                doc.text('Current Medications', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(10);
+                medications.forEach(function(med) {
+                    if (yPos > 270) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                    doc.text('- ' + med.name + (med.dose ? ' (' + med.dose + ')' : ''), 20, yPos);
+                    yPos += 7;
+                });
+            }
+            
+            // Footer
+            doc.setFontSize(8);
+            doc.text('Generated by UC Companion - https://gabfarrugia99.github.io/IBD-Buddy/', 20, 285);
+            
+            doc.save('uc-health-report-' + new Date().toISOString().split('T')[0] + '.pdf');
         }
 
         // Science-based suggestions and daily tips
