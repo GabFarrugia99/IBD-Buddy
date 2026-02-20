@@ -25,6 +25,21 @@
             --success: #34d399;
             --border: rgba(148, 163, 184, 0.1);
         }
+        
+        /* Girly/Pastel Theme */
+        body.pastel-theme {
+            --bg-primary: #fff0f5;
+            --bg-secondary: #ffe4e1;
+            --bg-card: #fff5ee;
+            --accent: #ff69b4;
+            --accent-soft: rgba(255, 105, 180, 0.15);
+            --text-primary: #4a4a4a;
+            --text-secondary: #7a7a7a;
+            --danger: #ff6b6b;
+            --warning: #ffb347;
+            --success: #77dd77;
+            --border: rgba(255, 182, 193, 0.3);
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-primary);
@@ -152,11 +167,19 @@
         .upcoming-appt { border-left-color: var(--accent); }
         .urgent-appt { border-left-color: var(--danger); animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.4); } 50% { box-shadow: 0 0 0 4px rgba(248, 113, 113, 0); } }
+        
+        /* Theme Toggle */
+        .theme-toggle { position: absolute; top: 1rem; right: 1rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 20px; padding: 0.5rem 1rem; cursor: pointer; font-size: 0.875rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem; }
+        .theme-toggle:hover { background: var(--bg-card); }
+        .theme-toggle .emoji { font-size: 1rem; }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
+        <header style="position: relative;">
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+                <span class="emoji">🎀</span> <span id="themeText">Pastel</span>
+            </button>
             <h1>UC Companion</h1>
             <p>Daily symptom & wellness tracker</p>
         </header>
@@ -385,6 +408,16 @@
         let appointments = [];
 
         document.addEventListener('DOMContentLoaded', function() { 
+            // Load theme preference
+            if (storageAvailable) {
+                const savedTheme = localStorage.getItem('ucTheme');
+                if (savedTheme === 'pastel') {
+                    document.body.classList.add('pastel-theme');
+                    document.getElementById('themeText').textContent = 'Dark';
+                    document.getElementById('themeBtn').querySelector('.emoji').textContent = '🌙';
+                }
+            }
+            
             loadData(); 
             updateDate(); 
             updateUI();
@@ -694,6 +727,19 @@
         function updateBathroom(delta) {
             todayData.bathroomCount = Math.max(0, todayData.bathroomCount + delta);
             document.getElementById('bathroomCount').textContent = todayData.bathroomCount;
+        }
+
+        // Theme toggle function
+        function toggleTheme() {
+            document.body.classList.toggle('pastel-theme');
+            const isPastel = document.body.classList.contains('pastel-theme');
+            document.getElementById('themeText').textContent = isPastel ? 'Dark' : 'Pastel';
+            document.getElementById('themeBtn').querySelector('.emoji').textContent = isPastel ? '🌙' : '🎀';
+            
+            // Save preference
+            if (storageAvailable) {
+                localStorage.setItem('ucTheme', isPastel ? 'pastel' : 'dark');
+            }
         }
 
         function toggleSymptom(symptom) {
