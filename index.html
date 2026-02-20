@@ -186,14 +186,6 @@
             </div>
         </div>
         
-        <!-- Science-Based Suggestions -->
-        <div class="card">
-            <h3>Science-Based Suggestions</h3>
-            <div id="suggestionsList">
-                <p style="color: var(--text-secondary); font-size: 0.875rem;">Track your symptoms to see personalized suggestions.</p>
-            </div>
-        </div>
-        
         <!-- Daily Medications -->
         <div class="card">
             <h3>Today's Medications</h3>
@@ -253,30 +245,30 @@
         <div class="card">
             <h3>Symptoms</h3>
             <div class="symptom-grid">
-                <button class="symptom-btn" id="symptom-pain" onclick="toggleSymptom('pain')">
+                <div class="symptom-btn" id="symptom-pain" onclick="toggleSymptom('pain')" role="button" tabindex="0">
                     <div class="icon">Pain</div>
                     <div>Abdominal Pain</div>
-                </button>
-                <button class="symptom-btn" id="symptom-blood" onclick="toggleSymptom('blood')">
+                </div>
+                <div class="symptom-btn" id="symptom-blood" onclick="toggleSymptom('blood')" role="button" tabindex="0">
                     <div class="icon">Blood</div>
                     <div>Blood in Stool</div>
-                </button>
-                <button class="symptom-btn" id="symptom-urgency" onclick="toggleSymptom('urgency')">
+                </div>
+                <div class="symptom-btn" id="symptom-urgency" onclick="toggleSymptom('urgency')" role="button" tabindex="0">
                     <div class="icon">Urgency</div>
                     <div>Urgency</div>
-                </button>
-                <button class="symptom-btn" id="symptom-fatigue" onclick="toggleSymptom('fatigue')">
+                </div>
+                <div class="symptom-btn" id="symptom-fatigue" onclick="toggleSymptom('fatigue')" role="button" tabindex="0">
                     <div class="icon">Fatigue</div>
                     <div>Fatigue</div>
-                </button>
-                <button class="symptom-btn" id="symptom-nausea" onclick="toggleSymptom('nausea')">
+                </div>
+                <div class="symptom-btn" id="symptom-nausea" onclick="toggleSymptom('nausea')" role="button" tabindex="0">
                     <div class="icon">Nausea</div>
                     <div>Nausea</div>
-                </button>
-                <button class="symptom-btn" id="symptom-appetite" onclick="toggleSymptom('appetite')">
+                </div>
+                <div class="symptom-btn" id="symptom-appetite" onclick="toggleSymptom('appetite')" role="button" tabindex="0">
                     <div class="icon">Appetite</div>
                     <div>Low Appetite</div>
-                </button>
+                </div>
             </div>
         </div>
         
@@ -295,6 +287,14 @@
         </div>
         
         <button class="save-btn" id="saveBtn" onclick="saveEntry()">Save Today's Entry</button>
+        
+        <!-- Science-Based Suggestions -->
+        <div class="card">
+            <h3>Science-Based Suggestions</h3>
+            <div id="suggestionsList">
+                <p style="color: var(--text-secondary); font-size: 0.875rem;">Track your symptoms to see personalized suggestions.</p>
+            </div>
+        </div>
         
         <div class="history-section">
             <div class="card">
