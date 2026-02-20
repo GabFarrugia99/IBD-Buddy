@@ -99,7 +99,162 @@
         .stat-box .number { font-size: 1.5rem; font-weight: 600; color: var(--accent); }
         .stat-box .label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
         .empty-state { text-align: center; padding: 2rem; color: var(--text-secondary); }
-        @media (max-width: 480px) { .symptom-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr; } }
+        /* Mood Journal Styles */
+        .mood-scale, .energy-scale, .anxiety-scale {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 0.75rem;
+        }
+        .mood-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--bg-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mood-btn:hover, .mood-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            transform: scale(1.1);
+        }
+        .energy-btn {
+            padding: 0.5rem 0.75rem;
+            border-radius: 20px;
+            border: 2px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+        .energy-btn:hover, .energy-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+        .anxiety-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .anxiety-btn:hover, .anxiety-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+        .anxiety-btn.severe { color: var(--danger); }
+        .anxiety-btn.moderate { color: var(--warning); }
+        .anxiety-btn.mild { color: var(--success); }
+        
+        /* Trigger Analysis Styles */
+        .trigger-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+        .trigger-btn {
+            background: var(--bg-secondary);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 0.75rem 0.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            min-height: 70px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .trigger-btn:hover {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+        .trigger-btn.active {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+        }
+        .trigger-btn .icon {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .trigger-btn div:last-child {
+            font-size: 0.75rem;
+        }
+        .custom-trigger-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .custom-trigger-tag {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 0.375rem 0.875rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .custom-trigger-tag.active {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+        }
+        .custom-trigger-tag button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        
+        /* Trigger Insights Styles */
+        .insight-item {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid var(--accent);
+        }
+        .insight-item h4 {
+            font-size: 0.875rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        .insight-item p {
+            font-size: 0.9375rem;
+            line-height: 1.5;
+        }
+        .insight-item .correlation {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+        .insight-item.high-correlation {
+            border-left-color: var(--danger);
+        }
+        .insight-item.medium-correlation {
+            border-left-color: var(--warning);
+        }
+        .insight-item.low-correlation {
+            border-left-color: var(--success);
+        }
+        
+        @media (max-width: 480px) {
+            .trigger-grid { grid-template-columns: repeat(2, 1fr); }
+            .mood-btn { width: 45px; height: 45px; font-size: 1.25rem; }
+        }
         
         /* Medication Management Styles */
         .med-manager { margin-top: 1rem; }
@@ -223,6 +378,101 @@
             </div>
         </div>
         
+        <!-- Mood Journal -->
+        <div class="card">
+            <h3>Mood Journal</h3>
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.75rem;">How are you feeling emotionally today?</p>
+            <div class="mood-scale" id="moodScale">
+                <button class="mood-btn" onclick="setMood(1)" title="Very Low">😢</button>
+                <button class="mood-btn" onclick="setMood(2)" title="Low">😔</button>
+                <button class="mood-btn" onclick="setMood(3)" title="Neutral">😐</button>
+                <button class="mood-btn" onclick="setMood(4)" title="Good">🙂</button>
+                <button class="mood-btn" onclick="setMood(5)" title="Great">😊</button>
+            </div>
+            <p id="moodLabel" style="text-align: center; margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Tap an emoji to rate your mood</p>
+            
+            <div style="margin-top: 1rem;">
+                <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Energy level:</p>
+                <div class="energy-scale" id="energyScale">
+                    <button class="energy-btn" onclick="setEnergy(1)">⚡</button>
+                    <button class="energy-btn" onclick="setEnergy(2)">⚡⚡</button>
+                    <button class="energy-btn" onclick="setEnergy(3)">⚡⚡⚡</button>
+                    <button class="energy-btn" onclick="setEnergy(4)">⚡⚡⚡⚡</button>
+                    <button class="energy-btn" onclick="setEnergy(5)">⚡⚡⚡⚡⚡</button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1rem;">
+                <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Anxiety level:</p>
+                <div class="anxiety-scale" id="anxietyScale">
+                    <button class="anxiety-btn mild" onclick="setAnxiety(1)">1</button>
+                    <button class="anxiety-btn mild" onclick="setAnxiety(2)">2</button>
+                    <button class="anxiety-btn" onclick="setAnxiety(3)">3</button>
+                    <button class="anxiety-btn moderate" onclick="setAnxiety(4)">4</button>
+                    <button class="anxiety-btn severe" onclick="setAnxiety(5)">5</button>
+                </div>
+            </div>
+            
+            <div class="mood-notes" style="margin-top: 1rem;">
+                <textarea id="moodNotes" placeholder="What's on your mind? Any stressors, wins, or thoughts to capture?" style="width: 100%; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; color: var(--text-primary); font-size: 1rem; resize: vertical; min-height: 80px; font-family: inherit;"></textarea>
+            </div>
+        </div>
+
+        <!-- Trigger Analysis -->
+        <div class="card">
+            <h3>Trigger Analysis</h3>
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Track potential triggers:</p>
+            <div class="trigger-grid">
+                <div class="trigger-btn" id="trigger-stress" onclick="toggleTrigger('stress')">
+                    <div class="icon">😰</div>
+                    <div>Stress</div>
+                </div>
+                <div class="trigger-btn" id="trigger-sleep" onclick="toggleTrigger('sleep')">
+                    <div class="icon">😴</div>
+                    <div>Poor Sleep</div>
+                </div>
+                <div class="trigger-btn" id="trigger-alcohol" onclick="toggleTrigger('alcohol')">
+                    <div class="icon">🍷</div>
+                    <div>Alcohol</div>
+                </div>
+                <div class="trigger-btn" id="trigger-dairy" onclick="toggleTrigger('dairy')">
+                    <div class="icon">🥛</div>
+                    <div>Dairy</div>
+                </div>
+                <div class="trigger-btn" id="trigger-spicy" onclick="toggleTrigger('spicy')">
+                    <div class="icon">🌶️</div>
+                    <div>Spicy Food</div>
+                </div>
+                <div class="trigger-btn" id="trigger-nsaids" onclick="toggleTrigger('nsaids')">
+                    <div class="icon">💊</div>
+                    <div>NSAIDs</div>
+                </div>
+                <div class="trigger-btn" id="trigger-antibiotics" onclick="toggleTrigger('antibiotics')">
+                    <div class="icon">🧪</div>
+                    <div>Antibiotics</div>
+                </div>
+                <div class="trigger-btn" id="trigger-travel" onclick="toggleTrigger('travel')">
+                    <div class="icon">✈️</div>
+                    <div>Travel</div>
+                </div>
+            </div>
+            <div class="custom-trigger-input" style="margin-top: 1rem;">
+                <div class="food-input">
+                    <input type="text" id="customTriggerInput" placeholder="Add custom trigger..." onkeypress="if(event.key==='Enter')addCustomTrigger()">
+                    <button onclick="addCustomTrigger()">Add</button>
+                </div>
+            </div>
+            <div class="custom-trigger-list" id="customTriggerList"></div>
+        </div>
+
+        <!-- Trigger Insights -->
+        <div class="card">
+            <h3>Your Trigger Insights</h3>
+            <div id="triggerInsights">
+                <p style="color: var(--text-secondary); font-size: 0.875rem;">Track at least 7 days of triggers to see patterns.</p>
+            </div>
+        </div>
+
         <!-- Daily Medications -->
         <div class="card">
             <h3>Today's Medications</h3>
@@ -404,7 +654,7 @@
             console.warn('localStorage not available - running in memory-only mode');
         }
 
-        let todayData = { date: new Date().toISOString().split('T')[0], wellbeing: null, bathroomCount: 0, symptoms: {}, foods: [], notes: '', medications: {}, bristol: null };
+        let todayData = { date: new Date().toISOString().split('T')[0], wellbeing: null, bathroomCount: 0, symptoms: {}, foods: [], notes: '', medications: {}, bristol: null, mood: null, energy: null, anxiety: null, moodNotes: '', triggers: {}, customTriggers: [] };
         let allEntries = [];
         let medications = [];
         let appointments = [];
@@ -790,7 +1040,26 @@
                 const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 let symptoms = [];
                 for (let key in entry.symptoms) { if (entry.symptoms[key].active) symptoms.push(key); }
-                return '<div class="history-item"><h4>' + dateStr + '</h4><div class="summary">Wellbeing: ' + (entry.wellbeing || '-') + '/5 | Bathroom: ' + (entry.bathroomCount || 0) + ' | ' + (symptoms.join(', ') || 'No symptoms') + '</div></div>';
+                
+                let moodEmoji = '';
+                if (entry.mood) {
+                    const moodEmojis = ['', '😢', '😔', '😐', '🙂', '😊'];
+                    moodEmoji = moodEmojis[entry.mood] + ' ';
+                }
+                
+                let triggerCount = 0;
+                if (entry.triggers) {
+                    for (let key in entry.triggers) {
+                        if (entry.triggers[key].active) triggerCount++;
+                    }
+                }
+                if (entry.customTriggers) {
+                    triggerCount += entry.customTriggers.filter(function(t) { return t.active; }).length;
+                }
+                
+                let triggerText = triggerCount > 0 ? ' | ' + triggerCount + ' trigger' + (triggerCount > 1 ? 's' : '') : '';
+                
+                return '<div class="history-item"><h4>' + moodEmoji + dateStr + '</h4><div class="summary">Wellbeing: ' + (entry.wellbeing || '-') + '/5 | Bathroom: ' + (entry.bathroomCount || 0) + ' | ' + (symptoms.join(', ') || 'No symptoms') + triggerText + '</div></div>';
             }).join('');
         }
 
@@ -800,6 +1069,17 @@
             document.getElementById('dailyNotes').value = todayData.notes || '';
             for (let key in todayData.symptoms) updateSymptomUI(key);
             if (todayData.bristol) setBristol(todayData.bristol);
+            
+            // Mood journal UI
+            if (todayData.mood) setMood(todayData.mood);
+            if (todayData.energy) setEnergy(todayData.energy);
+            if (todayData.anxiety) setAnxiety(todayData.anxiety);
+            document.getElementById('moodNotes').value = todayData.moodNotes || '';
+            
+            // Triggers UI
+            for (let key in todayData.triggers) updateTriggerUI(key);
+            renderCustomTriggers();
+            
             updateFoodList(); updateHistory();
         }
 
@@ -816,9 +1096,21 @@
 
         function exportCSV() {
             if (allEntries.length === 0) { alert('No data to export!'); return; }
-            const headers = ['Date', 'Wellbeing', 'Bathroom', 'Pain', 'Blood', 'Urgency', 'Fatigue', 'Nausea', 'Appetite', 'Foods', 'Notes'];
+            const headers = ['Date', 'Wellbeing', 'Mood', 'Energy', 'Anxiety', 'Bathroom', 'Pain', 'Blood', 'Urgency', 'Fatigue', 'Nausea', 'Appetite', 'Bristol', 'Triggers', 'Foods', 'Notes', 'MoodNotes'];
             const rows = allEntries.map(function(e) {
-                return [e.date, e.wellbeing || '', e.bathroomCount || 0, e.symptoms.pain?.active ? 'Yes' : '', e.symptoms.blood?.active ? 'Yes' : '', e.symptoms.urgency?.active ? 'Yes' : '', e.symptoms.fatigue?.active ? 'Yes' : '', e.symptoms.nausea?.active ? 'Yes' : '', e.symptoms.appetite?.active ? 'Yes' : '', (e.foods || []).join('; '), (e.notes || '').replace(/"/g, '""')];
+                let triggerList = [];
+                if (e.triggers) {
+                    for (let key in e.triggers) {
+                        if (e.triggers[key].active) triggerList.push(key);
+                    }
+                }
+                if (e.customTriggers) {
+                    e.customTriggers.forEach(function(t) {
+                        if (t.active) triggerList.push(t.name);
+                    });
+                }
+                
+                return [e.date, e.wellbeing || '', e.mood || '', e.energy || '', e.anxiety || '', e.bathroomCount || 0, e.symptoms.pain?.active ? 'Yes' : '', e.symptoms.blood?.active ? 'Yes' : '', e.symptoms.urgency?.active ? 'Yes' : '', e.symptoms.fatigue?.active ? 'Yes' : '', e.symptoms.nausea?.active ? 'Yes' : '', e.symptoms.appetite?.active ? 'Yes' : '', e.bristol || '', triggerList.join('; '), (e.foods || []).join('; '), (e.notes || '').replace(/"/g, '""'), (e.moodNotes || '').replace(/"/g, '""')];
             });
             const csv = [headers.join(','), ...rows.map(function(r) { return r.map(function(v) { return '"' + v + '"'; }).join(','); })].join('\n');
             const blob = new Blob([csv], { type: 'text/csv' });
@@ -854,8 +1146,14 @@
             doc.setFontSize(10);
             const avgWellbeing = allEntries.filter(e => e.wellbeing).reduce((sum, e) => sum + e.wellbeing, 0) / allEntries.filter(e => e.wellbeing).length || 0;
             const avgBathroom = allEntries.reduce((sum, e) => sum + (e.bathroomCount || 0), 0) / allEntries.length;
+            const avgMood = allEntries.filter(e => e.mood).reduce((sum, e) => sum + e.mood, 0) / allEntries.filter(e => e.mood).length || 0;
+            const avgEnergy = allEntries.filter(e => e.energy).reduce((sum, e) => sum + e.energy, 0) / allEntries.filter(e => e.energy).length || 0;
             
             doc.text('Average Wellbeing: ' + avgWellbeing.toFixed(1) + '/5', 20, yPos);
+            yPos += 7;
+            doc.text('Average Mood: ' + avgMood.toFixed(1) + '/5', 20, yPos);
+            yPos += 7;
+            doc.text('Average Energy: ' + avgEnergy.toFixed(1) + '/5', 20, yPos);
             yPos += 7;
             doc.text('Average Bathroom Visits: ' + avgBathroom.toFixed(1), 20, yPos);
             yPos += 15;
@@ -880,17 +1178,46 @@
                     if (entry.symptoms[key].active) symptoms.push(key);
                 }
                 
+                let triggerList = [];
+                if (entry.triggers) {
+                    for (let key in entry.triggers) {
+                        if (entry.triggers[key].active) triggerList.push(key);
+                    }
+                }
+                if (entry.customTriggers) {
+                    entry.customTriggers.forEach(function(t) {
+                        if (t.active) triggerList.push(t.name);
+                    });
+                }
+                
+                const moodEmojis = ['', '😢', '😔', '😐', '🙂', '😊'];
+                const moodStr = entry.mood ? moodEmojis[entry.mood] + ' ' : '';
+                
                 doc.setFont(undefined, 'bold');
-                doc.text(date + ' - Wellbeing: ' + (entry.wellbeing || '-') + '/5', 20, yPos);
+                doc.text(date + ' - ' + moodStr + 'Wellbeing: ' + (entry.wellbeing || '-') + '/5', 20, yPos);
                 yPos += 6;
                 
                 doc.setFont(undefined, 'normal');
                 doc.text('Bathroom: ' + (entry.bathroomCount || 0) + ' | Symptoms: ' + (symptoms.join(', ') || 'None'), 20, yPos);
                 yPos += 6;
                 
+                if (entry.mood || entry.energy || entry.anxiety) {
+                    let moodText = [];
+                    if (entry.mood) moodText.push('Mood: ' + entry.mood + '/5');
+                    if (entry.energy) moodText.push('Energy: ' + entry.energy + '/5');
+                    if (entry.anxiety) moodText.push('Anxiety: ' + entry.anxiety + '/5');
+                    doc.text(moodText.join(' | '), 20, yPos);
+                    yPos += 6;
+                }
+                
                 if (entry.bristol) {
                     const bristolTypes = ['', 'Severe constipation', 'Mild constipation', 'Normal', 'Normal (ideal)', 'Lacking fiber', 'Mild diarrhea', 'Severe diarrhea'];
                     doc.text('Stool: Type ' + entry.bristol + ' - ' + bristolTypes[entry.bristol], 20, yPos);
+                    yPos += 6;
+                }
+                
+                if (triggerList.length > 0) {
+                    doc.text('Triggers: ' + triggerList.join(', '), 20, yPos);
                     yPos += 6;
                 }
                 
@@ -1071,16 +1398,223 @@
             document.getElementById('bristolText').textContent = bristolLabels[type];
         }
 
-        // Call generateSuggestions after save
+        // Mood Journal Functions
+        function setMood(level) {
+            todayData.mood = level;
+            document.querySelectorAll('#moodScale .mood-btn').forEach(function(btn, i) {
+                btn.classList.toggle('active', i + 1 === level);
+            });
+            const labels = ['', 'Very Low', 'Low', 'Neutral', 'Good', 'Great'];
+            document.getElementById('moodLabel').textContent = 'Mood: ' + labels[level];
+        }
+
+        function setEnergy(level) {
+            todayData.energy = level;
+            document.querySelectorAll('#energyScale .energy-btn').forEach(function(btn, i) {
+                btn.classList.toggle('active', i + 1 === level);
+            });
+        }
+
+        function setAnxiety(level) {
+            todayData.anxiety = level;
+            document.querySelectorAll('#anxietyScale .anxiety-btn').forEach(function(btn, i) {
+                btn.classList.toggle('active', i + 1 === level);
+            });
+        }
+
+        // Trigger Analysis Functions
+        function toggleTrigger(trigger) {
+            if (!todayData.triggers[trigger]) {
+                todayData.triggers[trigger] = { active: true };
+            } else {
+                todayData.triggers[trigger].active = !todayData.triggers[trigger].active;
+            }
+            updateTriggerUI(trigger);
+        }
+
+        function updateTriggerUI(trigger) {
+            const btn = document.getElementById('trigger-' + trigger);
+            if (btn) {
+                const data = todayData.triggers[trigger];
+                btn.classList.toggle('active', data && data.active);
+            }
+        }
+
+        function addCustomTrigger() {
+            const input = document.getElementById('customTriggerInput');
+            const trigger = input.value.trim();
+            if (trigger) {
+                const triggerId = 'custom_' + Date.now();
+                todayData.customTriggers.push({
+                    id: triggerId,
+                    name: trigger,
+                    active: true
+                });
+                input.value = '';
+                renderCustomTriggers();
+            }
+        }
+
+        function removeCustomTrigger(triggerId) {
+            todayData.customTriggers = todayData.customTriggers.filter(function(t) {
+                return t.id !== triggerId;
+            });
+            renderCustomTriggers();
+        }
+
+        function toggleCustomTrigger(triggerId) {
+            const trigger = todayData.customTriggers.find(function(t) {
+                return t.id === triggerId;
+            });
+            if (trigger) {
+                trigger.active = !trigger.active;
+                renderCustomTriggers();
+            }
+        }
+
+        function renderCustomTriggers() {
+            const list = document.getElementById('customTriggerList');
+            if (todayData.customTriggers.length === 0) {
+                list.innerHTML = '';
+                return;
+            }
+            list.innerHTML = todayData.customTriggers.map(function(trigger) {
+                return '<div class="custom-trigger-tag ' + (trigger.active ? 'active' : '') + '" onclick="toggleCustomTrigger(\'' + trigger.id + '\')">' +
+                    trigger.name +
+                    '<button onclick="event.stopPropagation(); removeCustomTrigger(\'' + trigger.id + '\')">x</button>' +
+                '</div>';
+            }).join('');
+        }
+
+        // Trigger Insights Analysis
+        function generateTriggerInsights() {
+            const container = document.getElementById('triggerInsights');
+            if (allEntries.length < 7) {
+                container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.875rem;">Track at least 7 days of triggers to see patterns. You have ' + allEntries.length + ' entries so far.</p>';
+                return;
+            }
+
+            const insights = analyzeTriggers();
+            
+            if (insights.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.875rem;">Keep tracking! No strong patterns detected yet.</p>';
+                return;
+            }
+
+            container.innerHTML = insights.map(function(insight) {
+                let correlationClass = 'low-correlation';
+                if (insight.correlation >= 0.7) correlationClass = 'high-correlation';
+                else if (insight.correlation >= 0.5) correlationClass = 'medium-correlation';
+                
+                return '<div class="insight-item ' + correlationClass + '">' +
+                    '<h4>' + insight.trigger + '</h4>' +
+                    '<p>' + insight.description + '</p>' +
+                    '<div class="correlation">Correlation strength: ' + Math.round(insight.correlation * 100) + '%</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function analyzeTriggers() {
+            const insights = [];
+            const triggerTypes = ['stress', 'sleep', 'alcohol', 'dairy', 'spicy', 'nsaids', 'antibiotics', 'travel'];
+            
+            triggerTypes.forEach(function(triggerType) {
+                const withTrigger = allEntries.filter(function(e) {
+                    return e.triggers && e.triggers[triggerType] && e.triggers[triggerType].active;
+                });
+                
+                const withoutTrigger = allEntries.filter(function(e) {
+                    return !e.triggers || !e.triggers[triggerType] || !e.triggers[triggerType].active;
+                });
+                
+                if (withTrigger.length < 2) return;
+                
+                const avgWellbeingWith = withTrigger.reduce(function(sum, e) {
+                    return sum + (e.wellbeing || 3);
+                }, 0) / withTrigger.length;
+                
+                const avgWellbeingWithout = withoutTrigger.reduce(function(sum, e) {
+                    return sum + (e.wellbeing || 3);
+                }, 0) / withoutTrigger.length;
+                
+                const avgBathroomWith = withTrigger.reduce(function(sum, e) {
+                    return sum + (e.bathroomCount || 0);
+                }, 0) / withTrigger.length;
+                
+                const avgBathroomWithout = withoutTrigger.reduce(function(sum, e) {
+                    return sum + (e.bathroomCount || 0);
+                }, 0) / withoutTrigger.length;
+                
+                const wellbeingDiff = avgWellbeingWith - avgWellbeingWithout;
+                const bathroomDiff = avgBathroomWith - avgBathroomWithout;
+                
+                const triggerNames = {
+                    stress: 'Stress',
+                    sleep: 'Poor Sleep',
+                    alcohol: 'Alcohol',
+                    dairy: 'Dairy',
+                    spicy: 'Spicy Food',
+                    nsaids: 'NSAIDs',
+                    antibiotics: 'Antibiotics',
+                    travel: 'Travel'
+                };
+                
+                let correlation = 0;
+                let description = '';
+                
+                if (wellbeingDiff > 0.5 || bathroomDiff > 1) {
+                    correlation = Math.min(0.9, (wellbeingDiff * 0.2) + (bathroomDiff * 0.1));
+                    description = 'On days with ' + triggerNames[triggerType].toLowerCase() + ', your wellbeing is ' + 
+                        (wellbeingDiff > 0 ? 'worse by ' + wellbeingDiff.toFixed(1) + ' points' : 'similar') +
+                        ' and bathroom visits are ' + (bathroomDiff > 0 ? 'higher by ' + bathroomDiff.toFixed(1) : 'similar') + '.';
+                    
+                    insights.push({
+                        trigger: triggerNames[triggerType],
+                        correlation: correlation,
+                        description: description
+                    });
+                }
+            });
+            
+            // Sort by correlation strength
+            insights.sort(function(a, b) {
+                return b.correlation - a.correlation;
+            });
+            
+            return insights.slice(0, 5);
+        }
+
+        // Update saveEntry to include mood and trigger data
         const originalSaveEntry = saveEntry;
         saveEntry = function() {
-            originalSaveEntry();
-            generateSuggestions();
+            todayData.notes = document.getElementById('dailyNotes').value;
+            todayData.moodNotes = document.getElementById('moodNotes').value;
+            
+            const existingIndex = allEntries.findIndex(function(e) { return e.date === todayData.date; });
+            if (existingIndex >= 0) allEntries[existingIndex] = Object.assign({}, todayData);
+            else allEntries.unshift(Object.assign({}, todayData));
+            
+            saveData(); 
+            updateStats(); 
+            updateHistory(); 
+            renderDailyMeds();
+            generateTriggerInsights();
+            
+            const btn = document.getElementById('saveBtn');
+            btn.textContent = 'Saved!'; 
+            btn.classList.add('saved');
+            setTimeout(function() { 
+                btn.textContent = "Save Today's Entry"; 
+                btn.classList.remove('saved'); 
+            }, 2000);
         };
 
-        // Generate suggestions on load
+        // Generate suggestions and insights on load
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(generateSuggestions, 100);
+            setTimeout(function() {
+                generateSuggestions();
+                generateTriggerInsights();
+            }, 100);
         });
     </script>
 </body>
