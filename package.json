@@ -1,0 +1,8 @@
+{
+  "name": "uc-companion",
+  "version": "1.0.0",
+  "description": "Daily symptom and wellness tracker for ulcerative colitis",
+  "scripts": {
+    "start": "npx serve ."
+  }
+}

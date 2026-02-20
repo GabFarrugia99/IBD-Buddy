@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <title>UC Companion - Daily Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a1f2e;
+            --bg-card: #252b3d;
+            --accent: #5eead4;
+            --accent-soft: rgba(94, 234, 212, 0.1);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --danger: #f87171;
+            --warning: #fbbf24;
+            --success: #34d399;
+            --border: rgba(148, 163, 184, 0.1);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .container { max-width: 600px; margin: 0 auto; padding: 1rem; }
+        header { text-align: center; padding: 1.5rem 0; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+        header h1 { font-size: 1.5rem; font-weight: 600; color: var(--accent); margin-bottom: 0.25rem; }
+        header p { color: var(--text-secondary); font-size: 0.875rem; }
+        .date-display { text-align: center; margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-secondary); border-radius: 12px; }
+        .date-display h2 { font-size: 1.25rem; font-weight: 500; }
+        .card { background: var(--bg-card); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; border: 1px solid var(--border); }
+        .card h3 { font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .symptom-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+        .symptom-btn { background: var(--bg-secondary); border: 2px solid transparent; border-radius: 12px; padding: 1rem; color: var(--text-primary); cursor: pointer; transition: all 0.2s; text-align: center; min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .symptom-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+        .symptom-btn.active { background: var(--accent-soft); border-color: var(--accent); }
+        .symptom-btn .icon { font-size: 1.25rem; font-weight: 600; color: var(--accent); margin-bottom: 0.25rem; }
+        .severity-scale { display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.75rem; }
+        .severity-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; transition: all 0.2s; font-weight: 600; }
+        .severity-btn:hover, .severity-btn.active { border-color: var(--accent); background: var(--accent-soft); }
+        .severity-btn.severe { color: var(--danger); }
+        .severity-btn.moderate { color: var(--warning); }
+        .severity-btn.mild { color: var(--success); }
+        .counter { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 0.75rem; }
+        .counter-btn { width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--accent); color: var(--bg-primary); font-size: 1.25rem; cursor: pointer; transition: all 0.2s; }
+        .counter-btn:hover { transform: scale(1.05); }
+        .counter-value { font-size: 2rem; font-weight: 600; min-width: 60px; text-align: center; }
+        .food-input { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+        .food-input input { flex: 1; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-primary); font-size: 1rem; }
+        .food-input input:focus { outline: none; border-color: var(--accent); }
+        .food-input button { background: var(--accent); border: none; border-radius: 8px; padding: 0.75rem 1.25rem; color: var(--bg-primary); font-weight: 600; cursor: pointer; }
+        .food-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .food-tag { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 20px; padding: 0.375rem 0.875rem; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; }
+        .food-tag button { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1rem; line-height: 1; }
+        .notes textarea { width: 100%; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; color: var(--text-primary); font-size: 1rem; resize: vertical; min-height: 100px; font-family: inherit; }
+        .notes textarea:focus { outline: none; border-color: var(--accent); }
+        .save-btn { width: 100%; background: var(--accent); border: none; border-radius: 12px; padding: 1rem; color: var(--bg-primary); font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 1rem; transition: all 0.2s; }
+        .save-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(94, 234, 212, 0.3); }
+        .save-btn.saved { background: var(--success); }
+        .history-section { margin-top: 2rem; }
+        .history-item { background: var(--bg-secondary); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem; border-left: 3px solid var(--accent); }
+        .history-item h4 { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .history-item .summary { font-size: 0.9375rem; }
+        .export-btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 0.875rem; margin-top: 1rem; margin-right: 0.5rem; }
+        .export-btn:hover { background: var(--accent-soft); }
+        .medication-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .med-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; }
+        .med-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); }
+        .med-item label { flex: 1; cursor: pointer; }
+        .med-item .time { font-size: 0.75rem; color: var(--text-secondary); }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+        .stat-box { background: var(--bg-card); border-radius: 12px; padding: 1rem; text-align: center; border: 1px solid var(--border); }
+        .stat-box .number { font-size: 1.5rem; font-weight: 600; color: var(--accent); }
+        .stat-box .label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+        .empty-state { text-align: center; padding: 2rem; color: var(--text-secondary); }
+        @media (max-width: 480px) { .symptom-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr; } }
+        
+        /* Medication Management Styles */
+        .med-manager { margin-top: 1rem; }
+        .med-form { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; }
+        .med-form input, .med-form select { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-primary); font-size: 1rem; }
+        .med-form input:focus, .med-form select:focus { outline: none; border-color: var(--accent); }
+        .med-form-row { display: flex; gap: 0.5rem; }
+        .med-form-row input { flex: 1; }
+        .med-form button { background: var(--accent); border: none; border-radius: 8px; padding: 0.75rem 1.25rem; color: var(--bg-primary); font-weight: 600; cursor: pointer; }
+        .custom-med-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+        .custom-med-item { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid var(--accent); }
+        .custom-med-item .med-info { flex: 1; }
+        .custom-med-item .med-name { font-weight: 600; }
+        .custom-med-item .med-schedule { font-size: 0.75rem; color: var(--text-secondary); }
+        .custom-med-item button { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1rem; padding: 0.25rem 0.5rem; }
+        .med-checkbox-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+        .med-checkbox-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; }
+        .med-checkbox-item input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--accent); }
+        .med-checkbox-item label { flex: 1; cursor: pointer; font-size: 0.9375rem; }
+        .med-checkbox-item .med-time { font-size: 0.75rem; color: var(--text-secondary); background: var(--bg-card); padding: 0.25rem 0.5rem; border-radius: 4px; }
+        .med-checkbox-item.taken { opacity: 0.6; }
+        .med-checkbox-item.taken label { text-decoration: line-through; }
+        
+        /* Appointment Styles */
+        .appointment-card { background: linear-gradient(135deg, var(--accent-soft), transparent); border: 1px solid var(--accent); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+        .appointment-card h4 { color: var(--accent); margin-bottom: 0.5rem; font-size: 1rem; }
+        .appointment-card .appt-date { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .appointment-card .appt-countdown { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem; }
+        .appointment-card .appt-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .appt-btn { background: var(--accent); border: none; border-radius: 8px; padding: 0.625rem 1rem; color: var(--bg-primary); font-weight: 600; cursor: pointer; font-size: 0.875rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .appt-btn.secondary { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+        .appt-btn:hover { transform: translateY(-1px); }
+        
+        .appt-form { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+        .appt-form input { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-primary); font-size: 1rem; }
+        .appt-form input:focus { outline: none; border-color: var(--accent); }
+        .appt-form-row { display: flex; gap: 0.5rem; }
+        .appt-form-row input { flex: 1; }
+        .appt-form button { background: var(--accent); border: none; border-radius: 8px; padding: 0.75rem 1.25rem; color: var(--bg-primary); font-weight: 600; cursor: pointer; }
+        
+        .section-toggle { background: var(--bg-secondary); border: none; border-radius: 8px; padding: 0.75rem 1rem; color: var(--text-primary); cursor: pointer; width: 100%; text-align: left; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .section-toggle:hover { background: var(--bg-card); }
+        .section-toggle::after { content: '+'; font-size: 1.25rem; color: var(--accent); }
+        .section-toggle.expanded::after { content: '-'; }
+        .section-content { display: none; margin-top: 1rem; }
+        .section-content.visible { display: block; }
+        
+        .past-appt { border-left-color: var(--success); opacity: 0.8; }
+        .upcoming-appt { border-left-color: var(--accent); }
+        .urgent-appt { border-left-color: var(--danger); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.4); } 50% { box-shadow: 0 0 0 4px rgba(248, 113, 113, 0); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>UC Companion</h1>
+            <p>Daily symptom & wellness tracker</p>
+        </header>
+        
+        <div class="date-display">
+            <h2 id="currentDate">Loading...</h2>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="number" id="streakDays">0</div>
+                <div class="label">Day Streak</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="avgSymptoms">-</div>
+                <div class="label">Avg Severity</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="totalEntries">0</div>
+                <div class="label">Entries</div>
+            </div>
+        </div>
+        
+        <!-- Infusion/Appointment Section -->
+        <div class="card">
+            <h3>Infusion & Appointments</h3>
+            <div id="appointmentList"></div>
+            <button class="section-toggle" onclick="toggleSection('apptForm')">Schedule New Appointment</button>
+            <div id="apptForm" class="section-content">
+                <div class="appt-form">
+                    <input type="text" id="apptTitle" placeholder="Appointment type (e.g., Infliximab Infusion)">
+                    <input type="text" id="apptLocation" placeholder="Location (e.g., Hospital Name)">
+                    <div class="appt-form-row">
+                        <input type="date" id="apptDate">
+                        <input type="time" id="apptTime">
+                    </div>
+                    <input type="text" id="apptNotes" placeholder="Notes (optional)">
+                    <button onclick="addAppointment()">Add Appointment</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Daily Medications -->
+        <div class="card">
+            <h3>Today's Medications</h3>
+            <div id="dailyMedsList" class="med-checkbox-list">
+                <p style="color: var(--text-secondary); font-size: 0.875rem;">No medications added yet. Add them below.</p>
+            </div>
+        </div>
+        
+        <!-- Medication Manager -->
+        <div class="card">
+            <h3>Manage Medications</h3>
+            <button class="section-toggle" onclick="toggleSection('medFormSection')">Add New Medication</button>
+            <div id="medFormSection" class="section-content">
+                <div class="med-form">
+                    <input type="text" id="medName" placeholder="Medication name (e.g., Mesalamine)">
+                    <input type="text" id="medDose" placeholder="Dose (e.g., 500mg)">
+                    <select id="medFrequency">
+                        <option value="daily">Daily</option>
+                        <option value="twice_daily">Twice daily</option>
+                        <option value="three_times">Three times daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="as_needed">As needed</option>
+                    </select>
+                    <div class="med-form-row">
+                        <input type="time" id="medTime1" placeholder="Time">
+                        <input type="time" id="medTime2" placeholder="Second time (if applicable)" style="display:none;">
+                    </div>
+                    <input type="text" id="medInstructions" placeholder="Instructions (e.g., Take with food)">
+                    <button onclick="addMedication()">Add Medication</button>
+                </div>
+            </div>
+            <div id="customMedsList" class="custom-med-list"></div>
+        </div>
+        
+        <div class="card">
+            <h3>Overall Wellbeing</h3>
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.75rem;">How are you feeling overall today?</p>
+            <div class="severity-scale" id="wellbeingScale">
+                <button class="severity-btn mild" onclick="setWellbeing(1)">1</button>
+                <button class="severity-btn mild" onclick="setWellbeing(2)">2</button>
+                <button class="severity-btn" onclick="setWellbeing(3)">3</button>
+                <button class="severity-btn moderate" onclick="setWellbeing(4)">4</button>
+                <button class="severity-btn severe" onclick="setWellbeing(5)">5</button>
+            </div>
+            <p id="wellbeingLabel" style="text-align: center; margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Tap a number to rate</p>
+        </div>
+        
+        <div class="card">
+            <h3>Bathroom Visits</h3>
+            <div class="counter">
+                <button class="counter-btn" onclick="updateBathroom(-1)">-</button>
+                <div class="counter-value" id="bathroomCount">0</div>
+                <button class="counter-btn" onclick="updateBathroom(1)">+</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>Symptoms</h3>
+            <div class="symptom-grid">
+                <button class="symptom-btn" id="symptom-pain" onclick="toggleSymptom('pain')">
+                    <div class="icon">Pain</div>
+                    <div>Abdominal Pain</div>
+                </button>
+                <button class="symptom-btn" id="symptom-blood" onclick="toggleSymptom('blood')">
+                    <div class="icon">Blood</div>
+                    <div>Blood in Stool</div>
+                </button>
+                <button class="symptom-btn" id="symptom-urgency" onclick="toggleSymptom('urgency')">
+                    <div class="icon">Urgency</div>
+                    <div>Urgency</div>
+                </button>
+                <button class="symptom-btn" id="symptom-fatigue" onclick="toggleSymptom('fatigue')">
+                    <div class="icon">Fatigue</div>
+                    <div>Fatigue</div>
+                </button>
+                <button class="symptom-btn" id="symptom-nausea" onclick="toggleSymptom('nausea')">
+                    <div class="icon">Nausea</div>
+                    <div>Nausea</div>
+                </button>
+                <button class="symptom-btn" id="symptom-appetite" onclick="toggleSymptom('appetite')">
+                    <div class="icon">Appetite</div>
+                    <div>Low Appetite</div>
+                </button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>Food & Triggers</h3>
+            <div class="food-input">
+                <input type="text" id="foodInput" placeholder="Add food, drink, or trigger..." onkeypress="if(event.key==='Enter')addFood()">
+                <button onclick="addFood()">Add</button>
+            </div>
+            <div class="food-list" id="foodList"></div>
+        </div>
+        
+        <div class="card notes">
+            <h3>Notes</h3>
+            <textarea id="dailyNotes" placeholder="How was your day? Any patterns? Stress? Sleep?"></textarea>
+        </div>
+        
+        <button class="save-btn" id="saveBtn" onclick="saveEntry()">Save Today's Entry</button>
+        
+        <div class="history-section">
+            <div class="card">
+                <h3>Recent History</h3>
+                <div id="historyList">
+                    <div class="empty-state"><p>No entries yet. Start tracking today!</p></div>
+                </div>
+                <button class="export-btn" onclick="exportData()">Export JSON</button>
+                <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check for localStorage availability (iOS private mode blocks it)
+        let storageAvailable = false;
+        try {
+            const test = '__storage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            storageAvailable = true;
+        } catch (e) {
+            console.warn('localStorage not available - running in memory-only mode');
+        }
+
+        let todayData = { date: new Date().toISOString().split('T')[0], wellbeing: null, bathroomCount: 0, symptoms: {}, foods: [], notes: '', medications: {} };
+        let allEntries = [];
+        let medications = [];
+        let appointments = [];
+
+        document.addEventListener('DOMContentLoaded', function() { 
+            loadData(); 
+            updateDate(); 
+            updateUI();
+            renderMedications();
+            renderAppointments();
+            renderDailyMeds();
+        });
+
+        function updateDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = new Date().toLocaleDateString('en-US', options);
+            if (!storageAvailable) {
+                document.getElementById('currentDate').textContent = dateStr + ' (Private Mode - Data not saved)';
+            } else {
+                document.getElementById('currentDate').textContent = dateStr;
+            }
+        }
+
+        function loadData() {
+            if (!storageAvailable) return;
+            const saved = localStorage.getItem('ucCompanionData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                allEntries = data.entries || [];
+                medications = data.medications || [];
+                appointments = data.appointments || [];
+                const today = new Date().toISOString().split('T')[0];
+                const todayEntry = allEntries.find(function(e) { return e.date === today; });
+                if (todayEntry) todayData = Object.assign({}, todayData, todayEntry);
+            }
+            updateStats();
+        }
+
+        function saveData() { 
+            if (storageAvailable) {
+                localStorage.setItem('ucCompanionData', JSON.stringify({
+                    entries: allEntries,
+                    medications: medications,
+                    appointments: appointments
+                })); 
+            }
+        }
+
+        // Medication Management
+        function addMedication() {
+            const name = document.getElementById('medName').value.trim();
+            const dose = document.getElementById('medDose').value.trim();
+            const frequency = document.getElementById('medFrequency').value;
+            const time1 = document.getElementById('medTime1').value;
+            const time2 = document.getElementById('medTime2').value;
+            const instructions = document.getElementById('medInstructions').value.trim();
+            
+            if (!name) { alert('Please enter a medication name'); return; }
+            
+            const med = {
+                id: Date.now(),
+                name: name,
+                dose: dose,
+                frequency: frequency,
+                times: time2 ? [time1, time2] : [time1],
+                instructions: instructions,
+                created: new Date().toISOString()
+            };
+            
+            medications.push(med);
+            saveData();
+            renderMedications();
+            renderDailyMeds();
+            
+            // Clear form
+            document.getElementById('medName').value = '';
+            document.getElementById('medDose').value = '';
+            document.getElementById('medInstructions').value = '';
+            document.getElementById('medTime1').value = '';
+            document.getElementById('medTime2').value = '';
+        }
+
+        function deleteMedication(id) {
+            medications = medications.filter(function(m) { return m.id !== id; });
+            saveData();
+            renderMedications();
+            renderDailyMeds();
+        }
+
+        function renderMedications() {
+            const list = document.getElementById('customMedsList');
+            if (medications.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.875rem; text-align: center; margin-top: 1rem;">No medications added yet.</p>';
+                return;
+            }
+            
+            list.innerHTML = medications.map(function(med) {
+                const freqLabels = { daily: 'Daily', twice_daily: 'Twice daily', three_times: '3x daily', weekly: 'Weekly', as_needed: 'As needed' };
+                const timeStr = med.times.filter(function(t) { return t; }).join(', ') || 'No time set';
+                return '<div class="custom-med-item">' +
+                    '<div class="med-info">' +
+                        '<div class="med-name">' + med.name + (med.dose ? ' (' + med.dose + ')' : '') + '</div>' +
+                        '<div class="med-schedule">' + freqLabels[med.frequency] + ' at ' + timeStr + (med.instructions ? ' - ' + med.instructions : '') + '</div>' +
+                    '</div>' +
+                    '<button onclick="deleteMedication(' + med.id + ')">Delete</button>' +
+                '</div>';
+            }).join('');
+        }
+
+        function renderDailyMeds() {
+            const list = document.getElementById('dailyMedsList');
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (medications.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.875rem;">No medications added yet. Add them below.</p>';
+                return;
+            }
+            
+            // Get today's taken meds from todayData
+            const takenMeds = todayData.medications || {};
+            
+            let html = '';
+            medications.forEach(function(med) {
+                const freqLabels = { daily: 'Daily', twice_daily: 'Twice daily', three_times: '3x daily', weekly: 'Weekly', as_needed: 'As needed' };
+                
+                if (med.frequency === 'as_needed') {
+                    const isTaken = takenMeds['med_' + med.id];
+                    html += '<div class="med-checkbox-item ' + (isTaken ? 'taken' : '') + '">' +
+                        '<input type="checkbox" id="med_check_' + med.id + '" ' + (isTaken ? 'checked' : '') + ' onchange="toggleMedTaken(' + med.id + ')">' +
+                        '<label for="med_check_' + med.id + '">' + med.name + (med.dose ? ' ' + med.dose : '') + '</label>' +
+                        '<span class="med-time">As needed</span>' +
+                    '</div>';
+                } else {
+                    // For scheduled meds, show each time slot
+                    med.times.forEach(function(time, idx) {
+                        if (!time) return;
+                        const checkId = 'med_check_' + med.id + '_' + idx;
+                        const isTaken = takenMeds[checkId];
+                        html += '<div class="med-checkbox-item ' + (isTaken ? 'taken' : '') + '">' +
+                            '<input type="checkbox" id="' + checkId + '" ' + (isTaken ? 'checked' : '') + ' onchange="toggleMedTaken(' + med.id + ', ' + idx + ')">' +
+                            '<label for="' + checkId + '">' + med.name + (med.dose ? ' ' + med.dose : '') + '</label>' +
+                            '<span class="med-time">' + time + '</span>' +
+                        '</div>';
+                    });
+                }
+            });
+            
+            list.innerHTML = html || '<p style="color: var(--text-secondary); font-size: 0.875rem;">No medications scheduled for today.</p>';
+        }
+
+        function toggleMedTaken(medId, timeIdx) {
+            if (!todayData.medications) todayData.medications = {};
+            const checkId = timeIdx !== undefined ? 'med_check_' + medId + '_' + timeIdx : 'med_check_' + medId;
+            const checkbox = document.getElementById(checkId);
+            todayData.medications[checkId] = checkbox.checked;
+            renderDailyMeds();
+        }
+
+        // Appointment Management
+        function addAppointment() {
+            const title = document.getElementById('apptTitle').value.trim();
+            const location = document.getElementById('apptLocation').value.trim();
+            const date = document.getElementById('apptDate').value;
+            const time = document.getElementById('apptTime').value;
+            const notes = document.getElementById('apptNotes').value.trim();
+            
+            if (!title || !date) { alert('Please enter at least a title and date'); return; }
+            
+            const appt = {
+                id: Date.now(),
+                title: title,
+                location: location,
+                date: date,
+                time: time,
+                notes: notes,
+                created: new Date().toISOString()
+            };
+            
+            appointments.push(appt);
+            appointments.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+            saveData();
+            renderAppointments();
+            
+            // Clear form
+            document.getElementById('apptTitle').value = '';
+            document.getElementById('apptLocation').value = '';
+            document.getElementById('apptDate').value = '';
+            document.getElementById('apptTime').value = '';
+            document.getElementById('apptNotes').value = '';
+        }
+
+        function deleteAppointment(id) {
+            appointments = appointments.filter(function(a) { return a.id !== id; });
+            saveData();
+            renderAppointments();
+        }
+
+        function renderAppointments() {
+            const list = document.getElementById('appointmentList');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (appointments.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.875rem;">No appointments scheduled. Add your next infusion!</p>';
+                return;
+            }
+            
+            list.innerHTML = appointments.map(function(appt) {
+                const apptDate = new Date(appt.date + 'T00:00:00');
+                const daysDiff = Math.ceil((apptDate - today) / (1000 * 60 * 60 * 24));
+                
+                let countdownText = '';
+                let cardClass = 'appointment-card';
+                
+                if (daysDiff < 0) {
+                    countdownText = daysDiff === -1 ? 'Yesterday' : Math.abs(daysDiff) + ' days ago';
+                    cardClass += ' past-appt';
+                } else if (daysDiff === 0) {
+                    countdownText = 'TODAY!';
+                    cardClass += ' urgent-appt';
+                } else if (daysDiff === 1) {
+                    countdownText = 'Tomorrow';
+                    cardClass += ' urgent-appt';
+                } else if (daysDiff <= 7) {
+                    countdownText = daysDiff + ' days away';
+                    cardClass += ' upcoming-appt';
+                } else {
+                    countdownText = daysDiff + ' days away';
+                }
+                
+                const dateStr = apptDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const timeStr = appt.time ? appt.time : 'Time not set';
+                
+                // Google Calendar link
+                const startDate = appt.date.replace(/-/g, '');
+                const endDate = startDate;
+                const calendarUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(appt.title) + 
+                    '&dates=' + startDate + '/' + endDate + 
+                    '&details=' + encodeURIComponent(appt.notes || '') + 
+                    '&location=' + encodeURIComponent(appt.location || '');
+                
+                return '<div class="' + cardClass + '">' +
+                    '<h4>' + appt.title + '</h4>' +
+                    '<div class="appt-date">' + dateStr + (appt.time ? ' at ' + timeStr : '') + '</div>' +
+                    (appt.location ? '<div style="font-size: 0.875rem; margin-bottom: 0.25rem;">' + appt.location + '</div>' : '') +
+                    '<div class="appt-countdown">' + countdownText + '</div>' +
+                    '<div class="appt-actions">' +
+                        '<a href="' + calendarUrl + '" target="_blank" class="appt-btn">Add to Google Calendar</a>' +
+                        '<button class="appt-btn secondary" onclick="deleteAppointment(' + appt.id + ')">Delete</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function toggleSection(id) {
+            const section = document.getElementById(id);
+            const toggle = section.previousElementSibling;
+            section.classList.toggle('visible');
+            toggle.classList.toggle('expanded');
+        }
+
+        // Frequency change handler
+        document.getElementById('medFrequency').addEventListener('change', function() {
+            const time2Input = document.getElementById('medTime2');
+            if (this.value === 'twice_daily' || this.value === 'three_times') {
+                time2Input.style.display = 'block';
+            } else {
+                time2Input.style.display = 'none';
+                time2Input.value = '';
+            }
+        });
+
+        function updateStats() {
+            document.getElementById('totalEntries').textContent = allEntries.length;
+            let streak = 0;
+            const today = new Date();
+            for (let i = 0; i < 365; i++) {
+                const checkDate = new Date(today);
+                checkDate.setDate(checkDate.getDate() - i);
+                const dateStr = checkDate.toISOString().split('T')[0];
+                if (allEntries.some(function(e) { return e.date === dateStr; })) streak++;
+                else if (i > 0) break;
+            }
+            document.getElementById('streakDays').textContent = streak;
+            const wellbeingEntries = allEntries.filter(function(e) { return e.wellbeing; });
+            if (wellbeingEntries.length > 0) {
+                const avg = wellbeingEntries.reduce(function(sum, e) { return sum + e.wellbeing; }, 0) / wellbeingEntries.length;
+                document.getElementById('avgSymptoms').textContent = avg.toFixed(1);
+            }
+        }
+
+        function setWellbeing(level) {
+            todayData.wellbeing = level;
+            document.querySelectorAll('#wellbeingScale .severity-btn').forEach(function(btn, i) {
+                btn.classList.toggle('active', i + 1 === level);
+            });
+            const labels = ['', 'Great', 'Good', 'Okay', 'Not great', 'Very bad'];
+            document.getElementById('wellbeingLabel').textContent = labels[level];
+        }
+
+        function updateBathroom(delta) {
+            todayData.bathroomCount = Math.max(0, todayData.bathroomCount + delta);
+            document.getElementById('bathroomCount').textContent = todayData.bathroomCount;
+        }
+
+        function toggleSymptom(symptom) {
+            if (!todayData.symptoms[symptom]) todayData.symptoms[symptom] = { active: true };
+            else todayData.symptoms[symptom].active = !todayData.symptoms[symptom].active;
+            updateSymptomUI(symptom);
+        }
+
+        function updateSymptomUI(symptom) {
+            const btn = document.getElementById('symptom-' + symptom);
+            const data = todayData.symptoms[symptom];
+            btn.classList.toggle('active', data && data.active);
+        }
+
+        function addFood() {
+            const input = document.getElementById('foodInput');
+            const food = input.value.trim();
+            if (food) { todayData.foods.push(food); input.value = ''; updateFoodList(); }
+        }
+
+        function removeFood(index) { todayData.foods.splice(index, 1); updateFoodList(); }
+
+        function updateFoodList() {
+            const list = document.getElementById('foodList');
+            list.innerHTML = todayData.foods.map(function(food, i) {
+                return '<div class="food-tag">' + food + '<button onclick="removeFood(' + i + ')">x</button></div>';
+            }).join('');
+        }
+
+        function saveEntry() {
+            todayData.notes = document.getElementById('dailyNotes').value;
+            const existingIndex = allEntries.findIndex(function(e) { return e.date === todayData.date; });
+            if (existingIndex >= 0) allEntries[existingIndex] = Object.assign({}, todayData);
+            else allEntries.unshift(Object.assign({}, todayData));
+            saveData(); updateStats(); updateHistory(); renderDailyMeds();
+            const btn = document.getElementById('saveBtn');
+            btn.textContent = 'Saved!'; btn.classList.add('saved');
+            setTimeout(function() { btn.textContent = "Save Today's Entry"; btn.classList.remove('saved'); }, 2000);
+        }
+
+        function updateHistory() {
+            const list = document.getElementById('historyList');
+            if (allEntries.length === 0) { list.innerHTML = '<div class="empty-state"><p>No entries yet. Start tracking today!</p></div>'; return; }
+            list.innerHTML = allEntries.slice(0, 7).map(function(entry) {
+                const date = new Date(entry.date);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                let symptoms = [];
+                for (let key in entry.symptoms) { if (entry.symptoms[key].active) symptoms.push(key); }
+                return '<div class="history-item"><h4>' + dateStr + '</h4><div class="summary">Wellbeing: ' + (entry.wellbeing || '-') + '/5 | Bathroom: ' + (entry.bathroomCount || 0) + ' | ' + (symptoms.join(', ') || 'No symptoms') + '</div></div>';
+            }).join('');
+        }
+
+        function updateUI() {
+            if (todayData.wellbeing) setWellbeing(todayData.wellbeing);
+            document.getElementById('bathroomCount').textContent = todayData.bathroomCount;
+            document.getElementById('dailyNotes').value = todayData.notes || '';
+            for (let key in todayData.symptoms) updateSymptomUI(key);
+            updateFoodList(); updateHistory();
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify({ entries: allEntries, medications: medications, appointments: appointments }, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'uc-data-' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportCSV() {
+            if (allEntries.length === 0) { alert('No data to export!'); return; }
+            const headers = ['Date', 'Wellbeing', 'Bathroom', 'Pain', 'Blood', 'Urgency', 'Fatigue', 'Nausea', 'Appetite', 'Foods', 'Notes'];
+            const rows = allEntries.map(function(e) {
+                return [e.date, e.wellbeing || '', e.bathroomCount || 0, e.symptoms.pain?.active ? 'Yes' : '', e.symptoms.blood?.active ? 'Yes' : '', e.symptoms.urgency?.active ? 'Yes' : '', e.symptoms.fatigue?.active ? 'Yes' : '', e.symptoms.nausea?.active ? 'Yes' : '', e.symptoms.appetite?.active ? 'Yes' : '', (e.foods || []).join('; '), (e.notes || '').replace(/"/g, '""')];
+            });
+            const csv = [headers.join(','), ...rows.map(function(r) { return r.map(function(v) { return '"' + v + '"'; }).join(','); })].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'uc-data-' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
