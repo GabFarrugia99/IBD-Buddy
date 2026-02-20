@@ -111,6 +111,16 @@
         .suggestion-item.daily-tip { border-left-color: var(--warning); }
         .suggestion-item.daily-tip h4 { color: var(--warning); }
         
+        /* Bristol Stool Scale Styles */
+        .bristol-scale { display: flex; flex-direction: column; gap: 0.5rem; }
+        .bristol-option { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .bristol-option:hover { border-color: var(--accent); }
+        .bristol-option.active { background: var(--accent-soft); border-color: var(--accent); }
+        .bristol-number { width: 28px; height: 28px; border-radius: 50%; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem; flex-shrink: 0; }
+        .bristol-option.active .bristol-number { background: var(--accent); color: var(--bg-primary); }
+        .bristol-desc { flex: 1; font-size: 0.9375rem; }
+        .bristol-type { font-size: 0.75rem; color: var(--text-secondary); text-align: right; }
+        
         /* Appointment Styles */
         .appointment-card { background: linear-gradient(135deg, var(--accent-soft), transparent); border: 1px solid var(--accent); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
         .appointment-card h4 { color: var(--accent); margin-bottom: 0.5rem; font-size: 1rem; }
@@ -272,6 +282,52 @@
             </div>
         </div>
         
+        <!-- Stool Consistency (Bristol Stool Scale) -->
+        <div class="card">
+            <h3>Stool Consistency (Bristol Scale)</h3>
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Select the type that best matches today:</p>
+            <div class="bristol-scale">
+                <div class="bristol-option" id="bristol-1" onclick="setBristol(1)">
+                    <div class="bristol-number">1</div>
+                    <div class="bristol-desc">Separate hard lumps</div>
+                    <div class="bristol-type">Severe constipation</div>
+                </div>
+                <div class="bristol-option" id="bristol-2" onclick="setBristol(2)">
+                    <div class="bristol-number">2</div>
+                    <div class="bristol-desc">Lumpy sausage shape</div>
+                    <div class="bristol-type">Mild constipation</div>
+                </div>
+                <div class="bristol-option" id="bristol-3" onclick="setBristol(3)">
+                    <div class="bristol-number">3</div>
+                    <div class="bristol-desc">Cracked surface sausage</div>
+                    <div class="bristol-type">Normal</div>
+                </div>
+                <div class="bristol-option" id="bristol-4" onclick="setBristol(4)">
+                    <div class="bristol-number">4</div>
+                    <div class="bristol-desc">Smooth soft sausage</div>
+                    <div class="bristol-type">Normal (ideal)</div>
+                </div>
+                <div class="bristol-option" id="bristol-5" onclick="setBristol(5)">
+                    <div class="bristol-number">5</div>
+                    <div class="bristol-desc">Soft blobs with edges</div>
+                    <div class="bristol-type">Lacking fiber</div>
+                </div>
+                <div class="bristol-option" id="bristol-6" onclick="setBristol(6)">
+                    <div class="bristol-number">6</div>
+                    <div class="bristol-desc">Fluffy pieces</div>
+                    <div class="bristol-type">Mild diarrhea</div>
+                </div>
+                <div class="bristol-option" id="bristol-7" onclick="setBristol(7)">
+                    <div class="bristol-number">7</div>
+                    <div class="bristol-desc">Watery, no solids</div>
+                    <div class="bristol-type">Severe diarrhea</div>
+                </div>
+            </div>
+            <div id="bristolSelected" style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; display: none;">
+                <strong>Selected:</strong> <span id="bristolText"></span>
+            </div>
+        </div>
+        
         <div class="card">
             <h3>Food & Triggers</h3>
             <div class="food-input">
@@ -320,7 +376,7 @@
             console.warn('localStorage not available - running in memory-only mode');
         }
 
-        let todayData = { date: new Date().toISOString().split('T')[0], wellbeing: null, bathroomCount: 0, symptoms: {}, foods: [], notes: '', medications: {} };
+        let todayData = { date: new Date().toISOString().split('T')[0], wellbeing: null, bathroomCount: 0, symptoms: {}, foods: [], notes: '', medications: {}, bristol: null };
         let allEntries = [];
         let medications = [];
         let appointments = [];
@@ -681,6 +737,7 @@
             document.getElementById('bathroomCount').textContent = todayData.bathroomCount;
             document.getElementById('dailyNotes').value = todayData.notes || '';
             for (let key in todayData.symptoms) updateSymptomUI(key);
+            if (todayData.bristol) setBristol(todayData.bristol);
             updateFoodList(); updateHistory();
         }
 
@@ -818,6 +875,30 @@
             }
             
             container.innerHTML = html || '<p style="color: var(--text-secondary);">Track your symptoms to see personalized suggestions.</p>';
+        }
+
+        // Bristol Stool Scale functions
+        function setBristol(type) {
+            todayData.bristol = type;
+            
+            // Update UI
+            for (let i = 1; i <= 7; i++) {
+                document.getElementById('bristol-' + i).classList.toggle('active', i === type);
+            }
+            
+            // Show selected text
+            const bristolLabels = {
+                1: 'Type 1: Separate hard lumps (severe constipation)',
+                2: 'Type 2: Lumpy sausage shape (mild constipation)',
+                3: 'Type 3: Cracked surface sausage (normal)',
+                4: 'Type 4: Smooth soft sausage (normal - ideal)',
+                5: 'Type 5: Soft blobs with edges (lacking fiber)',
+                6: 'Type 6: Fluffy pieces (mild diarrhea)',
+                7: 'Type 7: Watery, no solids (severe diarrhea)'
+            };
+            
+            document.getElementById('bristolSelected').style.display = 'block';
+            document.getElementById('bristolText').textContent = bristolLabels[type];
         }
 
         // Call generateSuggestions after save
