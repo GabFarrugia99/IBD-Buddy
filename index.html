@@ -104,6 +104,13 @@
         .med-checkbox-item.taken { opacity: 0.6; }
         .med-checkbox-item.taken label { text-decoration: line-through; }
         
+        /* Suggestions Styles */
+        .suggestion-item { background: var(--bg-secondary); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem; border-left: 3px solid var(--accent); }
+        .suggestion-item h4 { font-size: 0.875rem; color: var(--accent); margin-bottom: 0.5rem; }
+        .suggestion-item p { font-size: 0.9375rem; line-height: 1.5; }
+        .suggestion-item.daily-tip { border-left-color: var(--warning); }
+        .suggestion-item.daily-tip h4 { color: var(--warning); }
+        
         /* Appointment Styles */
         .appointment-card { background: linear-gradient(135deg, var(--accent-soft), transparent); border: 1px solid var(--accent); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
         .appointment-card h4 { color: var(--accent); margin-bottom: 0.5rem; font-size: 1rem; }
@@ -176,6 +183,14 @@
                     <input type="text" id="apptNotes" placeholder="Notes (optional)">
                     <button onclick="addAppointment()">Add Appointment</button>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Science-Based Suggestions -->
+        <div class="card">
+            <h3>Science-Based Suggestions</h3>
+            <div id="suggestionsList">
+                <p style="color: var(--text-secondary); font-size: 0.875rem;">Track your symptoms to see personalized suggestions.</p>
             </div>
         </div>
         
@@ -695,6 +710,127 @@
             a.click();
             URL.revokeObjectURL(url);
         }
+
+        // Science-based suggestions and daily tips
+        const scienceTips = {
+            pain: {
+                title: 'Abdominal Pain Management',
+                tips: [
+                    'Heat therapy (warm compress) can reduce cramping by improving blood flow',
+                    'Gentle walking may help move gas and reduce pain',
+                    'Avoid NSAIDs like ibuprofen - they can worsen UC inflammation',
+                    'Consider antispasmodic medications prescribed by your doctor'
+                ]
+            },
+            blood: {
+                title: 'Managing Blood Loss',
+                tips: [
+                    'Stay hydrated - blood loss increases fluid needs',
+                    'Iron-rich foods may help prevent anemia (spinach, red meat if tolerated)',
+                    'Monitor for signs of anemia: fatigue, dizziness, pale skin',
+                    'Contact your doctor if bleeding increases significantly'
+                ]
+            },
+            urgency: {
+                title: 'Reducing Urgency',
+                tips: [
+                    'Avoid caffeine and alcohol - they stimulate the bowel',
+                    'Eat smaller, more frequent meals instead of large ones',
+                    'Identify and avoid your personal trigger foods',
+                    'Stress management techniques may help reduce urgency'
+                ]
+            },
+            fatigue: {
+                title: 'Combating Fatigue',
+                tips: [
+                    'Prioritize sleep - aim for 7-9 hours nightly',
+                    'Check iron and B12 levels - UC can cause deficiencies',
+                    'Gentle exercise like yoga can actually boost energy',
+                    'Rest when needed - fatigue is a real symptom of inflammation'
+                ]
+            },
+            nausea: {
+                title: 'Nausea Relief',
+                tips: [
+                    'Ginger tea or ginger chews are evidence-based for nausea',
+                    'Eat bland, dry foods like crackers or toast',
+                    'Stay hydrated with small, frequent sips of water',
+                    'Avoid strong smells and greasy foods'
+                ]
+            },
+            appetite: {
+                title: 'Improving Appetite',
+                tips: [
+                    'Eat your most nutritious foods when appetite is best',
+                    'Liquid nutrition (smoothies, soups) may be easier to tolerate',
+                    'Small, frequent meals are less overwhelming than large ones',
+                    'Nutritional supplements may help if intake is consistently low'
+                ]
+            }
+        };
+
+        const dailyTips = [
+            'Stress can trigger flares - try 5 minutes of deep breathing today',
+            'Keep a food diary to identify your personal trigger foods',
+            'Probiotics may help some people with UC - discuss with your doctor',
+            'Regular exercise reduces inflammation - even a 10-minute walk helps',
+            'Sleep is when your body heals - prioritize rest during flares',
+            'Omega-3 fatty acids (fish oil) have anti-inflammatory properties',
+            'Smoking worsens UC - quitting is one of the best things you can do',
+            'Stay hydrated - aim for 8 glasses of water daily',
+            'Soluble fiber (oats, bananas) may help during remission',
+            'Vitamin D deficiency is common in UC - get your levels checked',
+            'Mindfulness meditation can reduce pain perception and stress',
+            'Bone density scans are recommended for long-term steroid users'
+        ];
+
+        function generateSuggestions() {
+            const container = document.getElementById('suggestionsList');
+            if (!container) return;
+            
+            let html = '';
+            
+            // Check for active symptoms and add relevant tips
+            for (let symptom in todayData.symptoms) {
+                if (todayData.symptoms[symptom].active && scienceTips[symptom]) {
+                    const tip = scienceTips[symptom];
+                    const randomTip = tip.tips[Math.floor(Math.random() * tip.tips.length)];
+                    html += '<div class="suggestion-item"><h4>' + tip.title + '</h4><p>' + randomTip + '</p></div>';
+                }
+            }
+            
+            // Add daily tip
+            const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+            const dailyTip = dailyTips[dayOfYear % dailyTips.length];
+            html += '<div class="suggestion-item daily-tip"><h4>Daily Tip</h4><p>' + dailyTip + '</p></div>';
+            
+            // Add wellbeing-based suggestion
+            if (todayData.wellbeing) {
+                let wellbeingTip = '';
+                if (todayData.wellbeing <= 2) {
+                    wellbeingTip = 'You\'re doing well! Keep up your current routine and note what\'s working.';
+                } else if (todayData.wellbeing === 3) {
+                    wellbeingTip = 'An okay day. Focus on self-care and monitor for any changes.';
+                } else {
+                    wellbeingTip = 'A tough day. Be gentle with yourself and consider contacting your healthcare provider if symptoms persist.';
+                }
+                html += '<div class="suggestion-item"><h4>Based on Your Rating</h4><p>' + wellbeingTip + '</p></div>';
+            }
+            
+            container.innerHTML = html || '<p style="color: var(--text-secondary);">Track your symptoms to see personalized suggestions.</p>';
+        }
+
+        // Call generateSuggestions after save
+        const originalSaveEntry = saveEntry;
+        saveEntry = function() {
+            originalSaveEntry();
+            generateSuggestions();
+        };
+
+        // Generate suggestions on load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(generateSuggestions, 100);
+        });
     </script>
 </body>
 </html>
