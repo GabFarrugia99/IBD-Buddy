@@ -631,6 +631,17 @@
         
         <div class="history-section">
             <div class="card">
+                <h3>Patient Information for Reports</h3>
+                <div class="patient-info-form" style="margin-bottom: 1rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <input type="text" id="patientFirstName" placeholder="First Name" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; color: var(--text-primary); font-size: 1rem;">
+                        <input type="text" id="patientLastName" placeholder="Last Name" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; color: var(--text-primary); font-size: 1rem;">
+                    </div>
+                    <input type="text" id="patientId" placeholder="Patient ID / Medical Record Number" style="width: 100%; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; color: var(--text-primary); font-size: 1rem; margin-bottom: 0.75rem;">
+                    <button onclick="savePatientInfo()" style="background: var(--accent); border: none; border-radius: 8px; padding: 0.75rem 1.5rem; color: var(--bg-primary); font-weight: 600; cursor: pointer;">Save Patient Info</button>
+                    <p id="patientInfoStatus" style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;"></p>
+                </div>
+                
                 <h3>Recent History</h3>
                 <div id="historyList">
                     <div class="empty-state"><p>No entries yet. Start tracking today!</p></div>
@@ -707,6 +718,14 @@
                 allEntries = data.entries || [];
                 medications = data.medications || [];
                 appointments = data.appointments || [];
+                
+                // Load patient info
+                if (data.patientInfo) {
+                    document.getElementById('patientFirstName').value = data.patientInfo.firstName || '';
+                    document.getElementById('patientLastName').value = data.patientInfo.lastName || '';
+                    document.getElementById('patientId').value = data.patientInfo.patientId || '';
+                }
+                
                 const today = new Date().toISOString().split('T')[0];
                 const todayEntry = allEntries.find(function(e) { return e.date === today; });
                 if (todayEntry) todayData = Object.assign({}, todayData, todayEntry);
@@ -716,12 +735,29 @@
 
         function saveData() { 
             if (storageAvailable) {
+                const patientInfo = {
+                    firstName: document.getElementById('patientFirstName').value.trim(),
+                    lastName: document.getElementById('patientLastName').value.trim(),
+                    patientId: document.getElementById('patientId').value.trim()
+                };
+                
                 localStorage.setItem('ucCompanionData', JSON.stringify({
                     entries: allEntries,
                     medications: medications,
-                    appointments: appointments
+                    appointments: appointments,
+                    patientInfo: patientInfo
                 })); 
             }
+        }
+        
+        function savePatientInfo() {
+            saveData();
+            const status = document.getElementById('patientInfoStatus');
+            status.textContent = 'Patient information saved!';
+            status.style.color = 'var(--success)';
+            setTimeout(() => {
+                status.textContent = '';
+            }, 3000);
         }
 
         // Medication Management
@@ -1153,22 +1189,40 @@
             
             // Patient Info Box
             doc.setFillColor(245, 245, 245);
-            doc.roundedRect(15, 50, 180, 30, 3, 3, 'F');
+            doc.roundedRect(15, 50, 180, 45, 3, 3, 'F');
             
             setColor(secondaryColor);
             doc.setFontSize(10);
             doc.setFont(undefined, 'bold');
             doc.text('PATIENT INFORMATION', 20, 58);
             
+            // Get patient info from form
+            const firstName = document.getElementById('patientFirstName').value.trim();
+            const lastName = document.getElementById('patientLastName').value.trim();
+            const patientId = document.getElementById('patientId').value.trim();
+            
             doc.setFont(undefined, 'normal');
             doc.setFontSize(9);
-            doc.text('Report Period: ' + allEntries[allEntries.length - 1].date + ' to ' + allEntries[0].date, 20, 66);
-            doc.text('Total Days Tracked: ' + allEntries.length, 20, 72);
+            
+            let infoY = 66;
+            if (firstName || lastName) {
+                doc.text('Patient Name: ' + (firstName + ' ' + lastName).trim(), 20, infoY);
+                infoY += 6;
+            }
+            if (patientId) {
+                doc.text('Patient ID: ' + patientId, 20, infoY);
+                infoY += 6;
+            }
+            
+            doc.text('Report Period: ' + allEntries[allEntries.length - 1].date + ' to ' + allEntries[0].date, 20, infoY);
+            infoY += 6;
+            doc.text('Total Days Tracked: ' + allEntries.length, 20, infoY);
+            infoY += 6;
             doc.text('Generated: ' + new Date().toLocaleDateString('en-US', { 
                 weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-            }), 20, 78);
+            }), 20, infoY);
             
-            let yPos = 90;
+            let yPos = 105;
             
             // CLINICAL SUMMARY BOX
             doc.setFillColor(240, 248, 255);
