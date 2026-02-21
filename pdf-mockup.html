@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .pdf-page {
+            width: 595px;
+            height: 842px;
+            background: white;
+            margin: 0 auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #2980b9 0%, #1a5276 100%);
+            height: 100px;
+            padding: 20px;
+            color: white;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .header h2 {
+            font-size: 16px;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        /* Patient Info Box */
+        .patient-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 15px 20px;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+        }
+        .patient-box h3 {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .patient-info {
+            font-size: 10px;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        /* Clinical Summary */
+        .clinical-summary {
+            background: linear-gradient(135deg, #e8f4f8 0%, #d4e8f0 100%);
+            border: 2px solid #2980b9;
+            border-radius: 8px;
+            margin: 15px 20px;
+            padding: 15px;
+        }
+        .clinical-summary h3 {
+            color: #2980b9;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            padding: 4px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+        .summary-label {
+            color: #666;
+        }
+        .summary-value {
+            font-weight: 600;
+            color: #333;
+        }
+        .disease-activity {
+            color: #e74c3c;
+            font-weight: 700;
+        }
+        .legend {
+            font-size: 8px;
+            color: #888;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        /* Symptom Frequency */
+        .section {
+            margin: 15px 20px;
+        }
+        .section h3 {
+            color: #2980b9;
+            font-size: 13px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #2980b9;
+        }
+        .symptom-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 10px;
+        }
+        .symptom-name {
+            width: 60px;
+            color: #555;
+        }
+        .bar-container {
+            flex: 1;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin: 0 10px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+        .bar-fill.high { background: #e74c3c; }
+        .bar-fill.medium { background: #f39c12; }
+        .bar-fill.low { background: #2ecc71; }
+        .symptom-percent {
+            width: 70px;
+            text-align: right;
+            color: #666;
+            font-size: 9px;
+        }
+        
+        /* Trigger Analysis */
+        .trigger-item {
+            background: #f8f9fa;
+            border-left: 3px solid #2980b9;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            font-size: 10px;
+        }
+        .trigger-name {
+            font-weight: 600;
+            color: #2980b9;
+            margin-bottom: 3px;
+        }
+        .trigger-detail {
+            color: #666;
+        }
+        
+        /* Table */
+        .table-section {
+            margin: 15px 20px;
+        }
+        .table-section h3 {
+            color: #2980b9;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8px;
+        }
+        th {
+            background: #2980b9;
+            color: white;
+            padding: 6px 4px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 5px 4px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        /* Footer */
+        .footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-top: 1px solid #ddd;
+            padding: 10px 20px;
+            font-size: 8px;
+            color: #888;
+            text-align: center;
+        }
+        
+        /* Watermark */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 60px;
+            color: rgba(41, 128, 185, 0.05);
+            font-weight: 700;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="pdf-page">
+        <!-- Watermark -->
+        <div class="watermark">SAMPLE</div>
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>ULCERATIVE COLITIS</h1>
+            <h2>Clinical Activity Report</h2>
+        </div>
+        
+        <!-- Patient Info -->
+        <div class="patient-box">
+            <h3>Patient Information</h3>
+            <div class="patient-info">
+                Report Period: February 1, 2026 to February 21, 2026 · 
+                Total Days Tracked: 21 · 
+                Generated: Saturday, February 21, 2026
+            </div>
+        </div>
+        
+        <!-- Clinical Summary -->
+        <div class="clinical-summary">
+            <h3>CLINICAL SUMMARY (Last 14 Days)</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Average Daily Wellbeing:</span>
+                    <span class="summary-value">2.8 / 5</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Average Daily Mood:</span>
+                    <span class="summary-value">3.2 / 5</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Average Bathroom Visits:</span>
+                    <span class="summary-value">4.3 per day</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Disease Activity:</span>
+                    <span class="summary-value disease-activity">MODERATE</span>
+                </div>
+            </div>
+            <div class="legend">
+                Remission: Wellbeing ≤2, Bathroom ≤2 | Mild: Wellbeing 2-3, Bathroom 3-4 | 
+                Moderate: Wellbeing 3-4, Bathroom 4-6 | Severe: Wellbeing ≥4, Bathroom ≥6
+            </div>
+        </div>
+        
+        <!-- Symptom Frequency -->
+        <div class="section">
+            <h3>SYMPTOM FREQUENCY (Last 14 Days)</h3>
+            
+            <div class="symptom-bar">
+                <span class="symptom-name">Urgency</span>
+                <div class="bar-container">
+                    <div class="bar-fill high" style="width: 71%"></div>
+                </div>
+                <span class="symptom-percent">10 days (71%)</span>
+            </div>
+            
+            <div class="symptom-bar">
+                <span class="symptom-name">Fatigue</span>
+                <div class="bar-container">
+                    <div class="bar-fill high" style="width: 64%"></div>
+                </div>
+                <span class="symptom-percent">9 days (64%)</span>
+            </div>
+            
+            <div class="symptom-bar">
+                <span class="symptom-name">Pain</span>
+                <div class="bar-container">
+                    <div class="bar-fill medium" style="width: 43%"></div>
+                </div>
+                <span class="symptom-percent">6 days (43%)</span>
+            </div>
+            
+            <div class="symptom-bar">
+                <span class="symptom-name">Blood</span>
+                <div class="bar-container">
+                    <div class="bar-fill medium" style="width: 36%"></div>
+                </div>
+                <span class="symptom-percent">5 days (36%)</span>
+            </div>
+            
+            <div class="symptom-bar">
+                <span class="symptom-name">Nausea</span>
+                <div class="bar-container">
+                    <div class="bar-fill low" style="width: 21%"></div>
+                </div>
+                <span class="symptom-percent">3 days (21%)</span>
+            </div>
+            
+            <div class="symptom-bar">
+                <span class="symptom-name">Appetite</span>
+                <div class="bar-container">
+                    <div class="bar-fill low" style="width: 14%"></div>
+                </div>
+                <span class="symptom-percent">2 days (14%)</span>
+            </div>
+        </div>
+        
+        <!-- Trigger Analysis -->
+        <div class="section">
+            <h3>POTENTIAL TRIGGER ANALYSIS</h3>
+            
+            <div class="trigger-item">
+                <div class="trigger-name">Stress</div>
+                <div class="trigger-detail">
+                    Present on 8 days. Wellbeing 1.2 points lower. Avg 5.5 bathroom visits.
+                </div>
+            </div>
+            
+            <div class="trigger-item">
+                <div class="trigger-name">Dairy Products</div>
+                <div class="trigger-detail">
+                    Present on 5 days. Wellbeing 0.8 points lower. Avg 4.8 bathroom visits.
+                </div>
+            </div>
+            
+            <div class="trigger-item">
+                <div class="trigger-name">Spicy Foods</div>
+                <div class="trigger-detail">
+                    Present on 4 days. Wellbeing 0.9 points lower. Avg 5.2 bathroom visits.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Daily Log Table -->
+        <div class="table-section">
+            <h3>DAILY CLINICAL LOG</h3>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Wellbeing</th>
+                        <th>Mood</th>
+                        <th>Bathroom</th>
+                        <th>Bristol</th>
+                        <th>Symptoms</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Feb 21</td>
+                        <td>3</td>
+                        <td>4</td>
+                        <td>4</td>
+                        <td>5</td>
+                        <td>urg, fat</td>
+                        <td>Better after rest...</td>
+                    </tr>
+                    <tr>
+                        <td>Feb 20</td>
+                        <td>2</td>
+                        <td>3</td>
+                        <td>6</td>
+                        <td>6</td>
+                        <td>pain, blood, urg</td>
+                        <td>Ate spicy food...</td>
+                    </tr>
+                    <tr>
+                        <td>Feb 19</td>
+                        <td>3</td>
+                        <td>3</td>
+                        <td>5</td>
+                        <td>5</td>
+                        <td>urge, fat</td>
+                        <td>Work stress...</td>
+                    </tr>
+                    <tr>
+                        <td>Feb 18</td>
+                        <td>2</td>
+                        <td>2</td>
+                        <td>7</td>
+                        <td>6</td>
+                        <td>pain, blood, urg, nau</td>
+                        <td>Flare day, very tired</td>
+                    </tr>
+                    <tr>
+                        <td>Feb 17</td>
+                        <td>3</td>
+                        <td>4</td>
+                        <td>4</td>
+                        <td>4</td>
+                        <td>urge, fat</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>Feb 16</td>
+                        <td>4</td>
+                        <td>4</td>
+                        <td>3</td>
+                        <td>4</td>
+                        <td>None</td>
+                        <td>Good day, felt normal</td>
+                    </tr>
+                    <tr>
+                        <td>Feb 15</td>
+                        <td>3</td>
+                        <td>3</td>
+                        <td>4</td>
+                        <td>5</td>
+                        <td>urge</td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            Generated by UC Companion - This report is for informational purposes only and does not replace professional medical advice.
+        </div>
+        
+    </div>
+</body>
+</html>
