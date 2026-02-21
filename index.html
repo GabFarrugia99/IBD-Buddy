@@ -1128,74 +1128,327 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            // Title
-            doc.setFontSize(20);
-            doc.text('UC Companion - Health Report', 20, 20);
+            // Colors
+            const primaryColor = [41, 128, 185]; // Medical blue
+            const secondaryColor = [100, 100, 100];
+            const alertColor = [231, 76, 60];
+            const successColor = [46, 204, 113];
             
-            // Patient info
-            doc.setFontSize(12);
-            doc.text('Generated: ' + new Date().toLocaleDateString(), 20, 35);
-            doc.text('Total Entries: ' + allEntries.length, 20, 45);
+            // Helper function to add colored text
+            function setColor(color) {
+                doc.setTextColor(color[0], color[1], color[2]);
+            }
             
-            // Summary stats
-            let yPos = 60;
-            doc.setFontSize(14);
-            doc.text('Summary Statistics', 20, yPos);
-            yPos += 10;
+            // HEADER SECTION
+            doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.rect(0, 0, 210, 40, 'F');
             
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.setFont(undefined, 'bold');
+            doc.text('ULCERATIVE COLITIS', 20, 20);
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'normal');
+            doc.text('Clinical Activity Report', 20, 32);
+            
+            // Patient Info Box
+            doc.setFillColor(245, 245, 245);
+            doc.roundedRect(15, 50, 180, 30, 3, 3, 'F');
+            
+            setColor(secondaryColor);
             doc.setFontSize(10);
-            const avgWellbeing = allEntries.filter(e => e.wellbeing).reduce((sum, e) => sum + e.wellbeing, 0) / allEntries.filter(e => e.wellbeing).length || 0;
-            const avgBathroom = allEntries.reduce((sum, e) => sum + (e.bathroomCount || 0), 0) / allEntries.length;
-            const avgMood = allEntries.filter(e => e.mood).reduce((sum, e) => sum + e.mood, 0) / allEntries.filter(e => e.mood).length || 0;
-            const avgEnergy = allEntries.filter(e => e.energy).reduce((sum, e) => sum + e.energy, 0) / allEntries.filter(e => e.energy).length || 0;
+            doc.setFont(undefined, 'bold');
+            doc.text('PATIENT INFORMATION', 20, 58);
             
-            doc.text('Average Wellbeing: ' + avgWellbeing.toFixed(1) + '/5', 20, yPos);
-            yPos += 7;
-            doc.text('Average Mood: ' + avgMood.toFixed(1) + '/5', 20, yPos);
-            yPos += 7;
-            doc.text('Average Energy: ' + avgEnergy.toFixed(1) + '/5', 20, yPos);
-            yPos += 7;
-            doc.text('Average Bathroom Visits: ' + avgBathroom.toFixed(1), 20, yPos);
-            yPos += 15;
-            
-            // Recent entries
-            doc.setFontSize(14);
-            doc.text('Recent Entries (Last 14 Days)', 20, yPos);
-            yPos += 10;
-            
+            doc.setFont(undefined, 'normal');
             doc.setFontSize(9);
-            const recentEntries = allEntries.slice(0, 14);
+            doc.text('Report Period: ' + allEntries[allEntries.length - 1].date + ' to ' + allEntries[0].date, 20, 66);
+            doc.text('Total Days Tracked: ' + allEntries.length, 20, 72);
+            doc.text('Generated: ' + new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            }), 20, 78);
             
-            recentEntries.forEach(function(entry) {
-                if (yPos > 270) {
-                    doc.addPage();
-                    yPos = 20;
-                }
-                
-                const date = new Date(entry.date).toLocaleDateString();
-                let symptoms = [];
-                for (let key in entry.symptoms) {
-                    if (entry.symptoms[key].active) symptoms.push(key);
-                }
-                
-                let triggerList = [];
-                if (entry.triggers) {
-                    for (let key in entry.triggers) {
-                        if (entry.triggers[key].active) triggerList.push(key);
-                    }
-                }
-                if (entry.customTriggers) {
-                    entry.customTriggers.forEach(function(t) {
-                        if (t.active) triggerList.push(t.name);
+            let yPos = 90;
+            
+            // CLINICAL SUMMARY BOX
+            doc.setFillColor(240, 248, 255);
+            doc.roundedRect(15, yPos, 180, 55, 3, 3, 'F');
+            doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.setLineWidth(0.5);
+            doc.roundedRect(15, yPos, 180, 55, 3, 3, 'S');
+            
+            setColor(primaryColor);
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('CLINICAL SUMMARY', 20, yPos + 8);
+            
+            // Calculate clinical metrics
+            const recentEntries = allEntries.slice(0, 14);
+            const avgWellbeing = recentEntries.filter(e => e.wellbeing).reduce((sum, e) => sum + e.wellbeing, 0) / recentEntries.filter(e => e.wellbeing).length || 0;
+            const avgBathroom = recentEntries.reduce((sum, e) => sum + (e.bathroomCount || 0), 0) / recentEntries.length;
+            const avgMood = recentEntries.filter(e => e.mood).reduce((sum, e) => sum + e.mood, 0) / recentEntries.filter(e => e.mood).length || 0;
+            
+            // Determine disease activity
+            let diseaseActivity = 'REMISION';
+            let activityColor = successColor;
+            if (avgWellbeing >= 4 || avgBathroom >= 6) {
+                diseaseActivity = 'SEVERE';
+                activityColor = alertColor;
+            } else if (avgWellbeing >= 3 || avgBathroom >= 4) {
+                diseaseActivity = 'MODERATE';
+                activityColor = [243, 156, 18];
+            } else if (avgWellbeing >= 2 || avgBathroom >= 3) {
+                diseaseActivity = 'MILD';
+                activityColor = [241, 196, 15];
+            }
+            
+            setColor(secondaryColor);
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+            
+            // Left column
+            doc.text('Average Daily Wellbeing:', 20, yPos + 18);
+            doc.text('Average Daily Mood:', 20, yPos + 26);
+            doc.text('Average Bathroom Visits:', 20, yPos + 34);
+            doc.text('Disease Activity:', 20, yPos + 42);
+            
+            // Right column - values
+            setColor(primaryColor);
+            doc.setFont(undefined, 'bold');
+            doc.text(avgWellbeing.toFixed(1) + ' / 5', 70, yPos + 18);
+            doc.text(avgMood.toFixed(1) + ' / 5', 70, yPos + 26);
+            doc.text(avgBathroom.toFixed(1) + ' per day', 70, yPos + 34);
+            
+            setColor(activityColor);
+            doc.text(diseaseActivity, 70, yPos + 42);
+            
+            // Disease Activity Legend
+            setColor(secondaryColor);
+            doc.setFontSize(7);
+            doc.setFont(undefined, 'normal');
+            doc.text('Remission: Wellbeing ≤2, Bathroom ≤2 | Mild: Wellbeing 2-3, Bathroom 3-4 | Moderate: Wellbeing 3-4, Bathroom 4-6 | Severe: Wellbeing ≥4, Bathroom ≥6', 20, yPos + 50);
+            
+            yPos += 65;
+            
+            // SYMPTOM FREQUENCY SECTION
+            setColor(primaryColor);
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('SYMPTOM FREQUENCY (Last 14 Days)', 20, yPos);
+            
+            yPos += 8;
+            
+            // Calculate symptom frequencies
+            const symptomCounts = {};
+            const symptoms = ['pain', 'blood', 'urgency', 'fatigue', 'nausea', 'appetite'];
+            symptoms.forEach(s => symptomCounts[s] = 0);
+            
+            recentEntries.forEach(e => {
+                if (e.symptoms) {
+                    symptoms.forEach(s => {
+                        if (e.symptoms[s] && e.symptoms[s].active) symptomCounts[s]++;
                     });
                 }
+            });
+            
+            // Draw symptom bars
+            const barMaxWidth = 100;
+            doc.setFontSize(9);
+            
+            symptoms.forEach((symptom, i) => {
+                const count = symptomCounts[symptom];
+                const percentage = (count / recentEntries.length) * 100;
+                const barWidth = (percentage / 100) * barMaxWidth;
                 
-                const moodEmojis = ['', '😢', '😔', '😐', '🙂', '😊'];
-                const moodStr = entry.mood ? moodEmojis[entry.mood] + ' ' : '';
+                const y = yPos + (i * 10);
                 
-                doc.setFont(undefined, 'bold');
-                doc.text(date + ' - ' + moodStr + 'Wellbeing: ' + (entry.wellbeing || '-') + '/5', 20, yPos);
+                // Symptom name
+                setColor(secondaryColor);
+                doc.setFont(undefined, 'normal');
+                doc.text(symptom.charAt(0).toUpperCase() + symptom.slice(1), 20, y);
+                
+                // Background bar
+                doc.setFillColor(230, 230, 230);
+                doc.rect(60, y - 4, barMaxWidth, 6, 'F');
+                
+                // Value bar
+                if (percentage > 50) {
+                    doc.setFillColor(alertColor[0], alertColor[1], alertColor[2]);
+                } else if (percentage > 25) {
+                    doc.setFillColor(243, 156, 18);
+                } else {
+                    doc.setFillColor(successColor[0], successColor[1], successColor[2]);
+                }
+                doc.rect(60, y - 4, barWidth, 6, 'F');
+                
+                // Percentage text
+                setColor(secondaryColor);
+                doc.text(count + ' days (' + percentage.toFixed(0) + '%)', 165, y);
+            });
+            
+            yPos += 75;
+            
+            // TRIGGER ANALYSIS
+            if (yPos > 230) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            setColor(primaryColor);
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('POTENTIAL TRIGGER ANALYSIS', 20, yPos);
+            
+            yPos += 8;
+            
+            // Calculate trigger correlations
+            const triggerAnalysis = [];
+            const triggerTypes = ['stress', 'sleep', 'alcohol', 'dairy', 'spicy', 'nsaids', 'antibiotics', 'travel'];
+            const triggerNames = {
+                stress: 'Stress',
+                sleep: 'Poor Sleep',
+                alcohol: 'Alcohol',
+                dairy: 'Dairy Products',
+                spicy: 'Spicy Foods',
+                nsaids: 'NSAIDs',
+                antibiotics: 'Antibiotics',
+                travel: 'Travel'
+            };
+            
+            triggerTypes.forEach(trigger => {
+                const withTrigger = recentEntries.filter(e => e.triggers && e.triggers[trigger] && e.triggers[trigger].active);
+                if (withTrigger.length >= 2) {
+                    const avgWellbeingWith = withTrigger.reduce((sum, e) => sum + (e.wellbeing || 3), 0) / withTrigger.length;
+                    const avgBathroomWith = withTrigger.reduce((sum, e) => sum + (e.bathroomCount || 0), 0) / withTrigger.length;
+                    
+                    const withoutTrigger = recentEntries.filter(e => !e.triggers || !e.triggers[trigger] || !e.triggers[trigger].active);
+                    const avgWellbeingWithout = withoutTrigger.reduce((sum, e) => sum + (e.wellbeing || 3), 0) / withoutTrigger.length;
+                    
+                    const wellbeingDiff = avgWellbeingWith - avgWellbeingWithout;
+                    
+                    if (wellbeingDiff > 0.5) {
+                        triggerAnalysis.push({
+                            name: triggerNames[trigger],
+                            days: withTrigger.length,
+                            wellbeingImpact: wellbeingDiff.toFixed(1),
+                            avgBathroom: avgBathroomWith.toFixed(1)
+                        });
+                    }
+                }
+            });
+            
+            if (triggerAnalysis.length > 0) {
+                doc.setFontSize(9);
+                triggerAnalysis.forEach((t, i) => {
+                    const y = yPos + (i * 12);
+                    
+                    setColor(primaryColor);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(t.name, 20, y);
+                    
+                    setColor(secondaryColor);
+                    doc.setFont(undefined, 'normal');
+                    doc.text('Present on ' + t.days + ' days. Wellbeing ' + t.wellbeingImpact + ' points lower. Avg ' + t.avgBathroom + ' bathroom visits.', 20, y + 5);
+                });
+                yPos += triggerAnalysis.length * 12 + 10;
+            } else {
+                setColor(secondaryColor);
+                doc.setFontSize(9);
+                doc.text('No strong trigger correlations detected in the tracking period.', 20, yPos);
+                yPos += 10;
+            }
+            
+            // DAILY LOG TABLE
+            if (yPos > 200) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            setColor(primaryColor);
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('DAILY CLINICAL LOG', 20, yPos);
+            
+            yPos += 10;
+            
+            // Table header
+            doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.rect(15, yPos - 5, 180, 8, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(8);
+            doc.text('Date', 18, yPos);
+            doc.text('Wellbeing', 45, yPos);
+            doc.text('Mood', 70, yPos);
+            doc.text('Bathroom', 90, yPos);
+            doc.text('Bristol', 115, yPos);
+            doc.text('Symptoms', 135, yPos);
+            doc.text('Notes', 165, yPos);
+            
+            yPos += 8;
+            
+            // Table rows
+            const tableEntries = allEntries.slice(0, 21); // Last 21 days
+            
+            tableEntries.forEach((entry, i) => {
+                if (yPos > 280) {
+                    doc.addPage();
+                    yPos = 20;
+                    // Redraw header
+                    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                    doc.rect(15, yPos - 5, 180, 8, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.text('Date', 18, yPos);
+                    doc.text('Wellbeing', 45, yPos);
+                    doc.text('Mood', 70, yPos);
+                    doc.text('Bathroom', 90, yPos);
+                    doc.text('Bristol', 115, yPos);
+                    doc.text('Symptoms', 135, yPos);
+                    doc.text('Notes', 165, yPos);
+                    yPos += 8;
+                }
+                
+                // Alternate row colors
+                if (i % 2 === 0) {
+                    doc.setFillColor(250, 250, 250);
+                    doc.rect(15, yPos - 4, 180, 6, 'F');
+                }
+                
+                const date = new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                
+                // Get active symptoms
+                let activeSymptoms = [];
+                if (entry.symptoms) {
+                    for (let key in entry.symptoms) {
+                        if (entry.symptoms[key].active) activeSymptoms.push(key.substring(0, 3));
+                    }
+                }
+                
+                setColor(secondaryColor);
+                doc.setFontSize(7);
+                doc.text(date, 18, yPos);
+                doc.text((entry.wellbeing || '-').toString(), 50, yPos);
+                doc.text((entry.mood || '-').toString(), 75, yPos);
+                doc.text((entry.bathroomCount || 0).toString(), 97, yPos);
+                doc.text((entry.bristol || '-').toString(), 118, yPos);
+                doc.text(activeSymptoms.join(', ') || 'None', 135, yPos);
+                
+                // Truncate notes
+                const notes = entry.notes ? entry.notes.substring(0, 20) + (entry.notes.length > 20 ? '...' : '') : '';
+                doc.text(notes, 165, yPos);
+                
                 yPos += 6;
+            });
+            
+            // FOOTER
+            doc.setDrawColor(200, 200, 200);
+            doc.line(15, 285, 195, 285);
+            setColor(secondaryColor);
+            doc.setFontSize(8);
+            doc.text('Generated by UC Companion - This report is for informational purposes only and does not replace professional medical advice.', 20, 292);
+            
+            // Save
+            doc.save('UC-Clinical-Report-' + new Date().toISOString().split('T')[0] + '.pdf');
+        }
                 
                 doc.setFont(undefined, 'normal');
                 doc.text('Bathroom: ' + (entry.bathroomCount || 0) + ' | Symptoms: ' + (symptoms.join(', ') || 'None'), 20, yPos);
