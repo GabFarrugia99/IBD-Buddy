@@ -10,6 +10,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <title>UC Companion - Daily Tracker</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -553,8 +554,8 @@
                     <div>Nausea</div>
                 </div>
                 <div class="symptom-btn" id="symptom-appetite" onclick="toggleSymptom('appetite')" role="button" tabindex="0">
-                    <div class="icon">Appetite</div>
-                    <div>Low Appetite</div>
+                    <div class="icon">Low Appetite</div>
+                    <div>Poor Appetite</div>
                 </div>
             </div>
         </div>
@@ -566,12 +567,12 @@
             <div class="bristol-scale">
                 <div class="bristol-option" id="bristol-1" onclick="setBristol(1)">
                     <div class="bristol-number">1</div>
-                    <div class="bristol-desc">Separate hard lumps</div>
+                    <div class="bristol-desc">Hard lumps, difficult to pass</div>
                     <div class="bristol-type">Severe constipation</div>
                 </div>
                 <div class="bristol-option" id="bristol-2" onclick="setBristol(2)">
                     <div class="bristol-number">2</div>
-                    <div class="bristol-desc">Lumpy sausage shape</div>
+                    <div class="bristol-desc">Lumpy sausage, some straining</div>
                     <div class="bristol-type">Mild constipation</div>
                 </div>
                 <div class="bristol-option" id="bristol-3" onclick="setBristol(3)">
@@ -586,17 +587,17 @@
                 </div>
                 <div class="bristol-option" id="bristol-5" onclick="setBristol(5)">
                     <div class="bristol-number">5</div>
-                    <div class="bristol-desc">Soft blobs with edges</div>
-                    <div class="bristol-type">Lacking fiber</div>
+                    <div class="bristol-desc">Soft blobs, edges not formed</div>
+                    <div class="bristol-type">Low fiber / loose</div>
                 </div>
                 <div class="bristol-option" id="bristol-6" onclick="setBristol(6)">
                     <div class="bristol-number">6</div>
-                    <div class="bristol-desc">Fluffy pieces</div>
+                    <div class="bristol-desc">Fluffy pieces, urgent</div>
                     <div class="bristol-type">Mild diarrhea</div>
                 </div>
                 <div class="bristol-option" id="bristol-7" onclick="setBristol(7)">
                     <div class="bristol-number">7</div>
-                    <div class="bristol-desc">Watery, no solids</div>
+                    <div class="bristol-desc">Watery, no solid pieces</div>
                     <div class="bristol-type">Severe diarrhea</div>
                 </div>
             </div>
@@ -1164,344 +1165,424 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            // Colors
-            const primaryColor = [41, 128, 185]; // Medical blue
-            const secondaryColor = [100, 100, 100];
-            const alertColor = [231, 76, 60];
-            const successColor = [46, 204, 113];
+            // Modern Color Palette
+            const colors = {
+                primary: [45, 85, 125],
+                secondary: [70, 130, 180],
+                accent: [94, 234, 212],
+                success: [46, 204, 113],
+                warning: [241, 196, 15],
+                danger: [231, 76, 60],
+                text: [60, 60, 60],
+                textLight: [120, 120, 120],
+                bg: [250, 250, 252],
+                border: [220, 220, 230]
+            };
             
-            // Helper function to add colored text
-            function setColor(color) {
-                doc.setTextColor(color[0], color[1], color[2]);
-            }
+            function setColor(color) { doc.setTextColor(color[0], color[1], color[2]); }
+            function setFill(color) { doc.setFillColor(color[0], color[1], color[2]); }
             
-            // HEADER SECTION
-            doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.rect(0, 0, 210, 40, 'F');
+            // Header
+            setFill(colors.primary);
+            doc.rect(0, 0, 210, 35, 'F');
+            setFill(colors.accent);
+            doc.rect(0, 35, 210, 3, 'F');
             
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(24);
+            doc.setFontSize(22);
             doc.setFont(undefined, 'bold');
-            doc.text('ULCERATIVE COLITIS', 20, 20);
-            doc.setFontSize(16);
+            doc.text('UC Companion', 20, 18);
+            doc.setFontSize(11);
             doc.setFont(undefined, 'normal');
-            doc.text('Clinical Activity Report', 20, 32);
+            doc.text('Clinical Activity Report', 20, 28);
             
-            // Patient Info Box
-            doc.setFillColor(245, 245, 245);
-            doc.roundedRect(15, 50, 180, 45, 3, 3, 'F');
+            // Patient Info Card
+            const patientInfoY = 50;
+            setFill(colors.bg);
+            doc.roundedRect(15, patientInfoY, 180, 40, 4, 4, 'F');
+            setFill(colors.primary);
+            doc.roundedRect(15, patientInfoY, 4, 40, 2, 2, 'F');
             
-            setColor(secondaryColor);
+            setColor(colors.primary);
             doc.setFontSize(10);
             doc.setFont(undefined, 'bold');
-            doc.text('PATIENT INFORMATION', 20, 58);
+            doc.text('PATIENT INFORMATION', 25, patientInfoY + 10);
             
-            // Get patient info from form
             const firstName = document.getElementById('patientFirstName').value.trim();
             const lastName = document.getElementById('patientLastName').value.trim();
             const patientId = document.getElementById('patientId').value.trim();
             
-            doc.setFont(undefined, 'normal');
+            setColor(colors.text);
             doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
             
-            let infoY = 66;
+            let infoY = patientInfoY + 20;
             if (firstName || lastName) {
-                doc.text('Patient Name: ' + (firstName + ' ' + lastName).trim(), 20, infoY);
-                infoY += 6;
+                doc.text('Name:', 25, infoY);
+                setColor(colors.primary);
+                doc.setFont(undefined, 'bold');
+                doc.text((firstName + ' ' + lastName).trim(), 45, infoY);
+                setColor(colors.text);
+                doc.setFont(undefined, 'normal');
+                infoY += 8;
             }
             if (patientId) {
-                doc.text('Patient ID: ' + patientId, 20, infoY);
-                infoY += 6;
+                doc.text('ID:', 25, infoY);
+                doc.text(patientId, 45, infoY);
             }
             
-            doc.text('Report Period: ' + allEntries[allEntries.length - 1].date + ' to ' + allEntries[0].date, 20, infoY);
-            infoY += 6;
-            doc.text('Total Days Tracked: ' + allEntries.length, 20, infoY);
-            infoY += 6;
-            doc.text('Generated: ' + new Date().toLocaleDateString('en-US', { 
-                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-            }), 20, infoY);
-            
-            let yPos = 105;
-            
-            // CLINICAL SUMMARY BOX
-            doc.setFillColor(240, 248, 255);
-            doc.roundedRect(15, yPos, 180, 55, 3, 3, 'F');
-            doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.setLineWidth(0.5);
-            doc.roundedRect(15, yPos, 180, 55, 3, 3, 'S');
-            
-            setColor(primaryColor);
-            doc.setFontSize(12);
+            doc.text('Period:', 110, patientInfoY + 20);
+            doc.text(allEntries[allEntries.length - 1].date + ' to ' + allEntries[0].date, 130, patientInfoY + 20);
+            doc.text('Days Tracked:', 110, patientInfoY + 28);
+            setColor(colors.primary);
             doc.setFont(undefined, 'bold');
-            doc.text('CLINICAL SUMMARY', 20, yPos + 8);
+            doc.text(allEntries.length.toString(), 145, patientInfoY + 28);
+            doc.text('Generated: ' + new Date().toLocaleDateString('en-GB'), 110, patientInfoY + 36);
             
-            // Calculate clinical metrics
+            let yPos = patientInfoY + 50;
+            
+            // Key Metrics Dashboard
             const recentEntries = allEntries.slice(0, 14);
             const avgWellbeing = recentEntries.filter(e => e.wellbeing).reduce((sum, e) => sum + e.wellbeing, 0) / recentEntries.filter(e => e.wellbeing).length || 0;
             const avgBathroom = recentEntries.reduce((sum, e) => sum + (e.bathroomCount || 0), 0) / recentEntries.length;
             const avgMood = recentEntries.filter(e => e.mood).reduce((sum, e) => sum + e.mood, 0) / recentEntries.filter(e => e.mood).length || 0;
             
-            // Determine disease activity
-            let diseaseActivity = 'REMISION';
-            let activityColor = successColor;
-            if (avgWellbeing >= 4 || avgBathroom >= 6) {
-                diseaseActivity = 'SEVERE';
-                activityColor = alertColor;
-            } else if (avgWellbeing >= 3 || avgBathroom >= 4) {
-                diseaseActivity = 'MODERATE';
-                activityColor = [243, 156, 18];
-            } else if (avgWellbeing >= 2 || avgBathroom >= 3) {
-                diseaseActivity = 'MILD';
-                activityColor = [241, 196, 15];
+            let diseaseActivity = 'REMISSION';
+            let activityColor = colors.success;
+            if (avgWellbeing >= 4 || avgBathroom >= 6) { diseaseActivity = 'SEVERE'; activityColor = colors.danger; }
+            else if (avgWellbeing >= 3 || avgBathroom >= 4) { diseaseActivity = 'MODERATE'; activityColor = colors.warning; }
+            else if (avgWellbeing >= 2 || avgBathroom >= 3) { diseaseActivity = 'MILD'; activityColor = [255, 152, 0]; }
+            
+            const cardWidth = 42, cardHeight = 35, cardGap = 8, startX = 15;
+            const metrics = [
+                { label: 'Wellbeing', value: avgWellbeing.toFixed(1), subtext: avgWellbeing <= 2 ? 'Good' : avgWellbeing <= 3 ? 'Okay' : 'Poor', color: avgWellbeing <= 2 ? colors.success : avgWellbeing <= 3 ? colors.warning : colors.danger },
+                { label: 'Bathroom', value: avgBathroom.toFixed(1), subtext: 'per day', color: avgBathroom <= 3 ? colors.success : avgBathroom <= 5 ? colors.warning : colors.danger },
+                { label: 'Mood', value: avgMood.toFixed(1), subtext: '/ 5', color: avgMood >= 4 ? colors.success : avgMood >= 3 ? colors.warning : colors.danger },
+                { label: 'Status', value: diseaseActivity, subtext: 'Activity', color: activityColor }
+            ];
+            
+            metrics.forEach((metric, i) => {
+                const x = startX + i * (cardWidth + cardGap);
+                setFill(colors.bg);
+                doc.roundedRect(x, yPos, cardWidth, cardHeight, 3, 3, 'F');
+                setFill(metric.color);
+                doc.roundedRect(x, yPos, cardWidth, 4, 2, 2, 'F');
+                
+                setColor(colors.textLight);
+                doc.setFontSize(8);
+                doc.text(metric.label, x + 5, yPos + 12);
+                
+                setColor(metric.color);
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text(metric.value.toString(), x + 5, yPos + 24);
+                
+                setColor(colors.textLight);
+                doc.setFontSize(7);
+                doc.text(metric.subtext, x + 5, yPos + 31);
+            });
+            
+            yPos += cardHeight + 15;
+            
+            // Wellbeing Trend Chart
+            setColor(colors.primary);
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text('WELLBEING TREND (Last 14 Days)', 20, yPos);
+            yPos += 5;
+            
+            const chartHeight = 40, chartWidth = 180;
+            setFill([255, 255, 255]);
+            doc.roundedRect(15, yPos, chartWidth, chartHeight, 3, 3, 'F');
+            setFill(colors.border);
+            doc.roundedRect(15, yPos, chartWidth, chartHeight, 3, 3, 'S');
+            
+            for (let i = 1; i <= 4; i++) {
+                const y = yPos + chartHeight - (i / 5) * (chartHeight - 10) - 5;
+                doc.line(20, y, 15 + chartWidth - 5, y);
             }
             
-            setColor(secondaryColor);
-            doc.setFontSize(9);
-            doc.setFont(undefined, 'normal');
+            const chartEntries = recentEntries.slice().reverse();
+            if (chartEntries.length > 1) {
+                const xStep = (chartWidth - 10) / (chartEntries.length - 1);
+                chartEntries.forEach((entry, i) => {
+                    if (entry.wellbeing) {
+                        const x = 20 + i * xStep;
+                        const y = yPos + chartHeight - (entry.wellbeing / 5) * (chartHeight - 10) - 5;
+                        setFill(colors.secondary);
+                        doc.circle(x, y, 2, 'F');
+                        if (i < chartEntries.length - 1 && chartEntries[i + 1].wellbeing) {
+                            const nextX = 20 + (i + 1) * xStep;
+                            const nextY = yPos + chartHeight - (chartEntries[i + 1].wellbeing / 5) * (chartHeight - 10) - 5;
+                            doc.setLineWidth(0.5);
+                            doc.line(x, y, nextX, nextY);
+                        }
+                    }
+                });
+            }
             
-            // Left column
-            doc.text('Average Daily Wellbeing:', 20, yPos + 18);
-            doc.text('Average Daily Mood:', 20, yPos + 26);
-            doc.text('Average Bathroom Visits:', 20, yPos + 34);
-            doc.text('Disease Activity:', 20, yPos + 42);
+            setColor(colors.textLight);
+            doc.setFontSize(6);
+            for (let i = 1; i <= 5; i++) {
+                const y = yPos + chartHeight - (i / 5) * (chartHeight - 10) - 3;
+                doc.text(i.toString(), 12, y);
+            }
             
-            // Right column - values
-            setColor(primaryColor);
-            doc.setFont(undefined, 'bold');
-            doc.text(avgWellbeing.toFixed(1) + ' / 5', 70, yPos + 18);
-            doc.text(avgMood.toFixed(1) + ' / 5', 70, yPos + 26);
-            doc.text(avgBathroom.toFixed(1) + ' per day', 70, yPos + 34);
-            
-            setColor(activityColor);
-            doc.text(diseaseActivity, 70, yPos + 42);
-            
-            // Disease Activity Legend
-            setColor(secondaryColor);
+            setColor(colors.textLight);
             doc.setFontSize(7);
-            doc.setFont(undefined, 'normal');
-            doc.text('Remission: Wellbeing ≤2, Bathroom ≤2 | Mild: Wellbeing 2-3, Bathroom 3-4 | Moderate: Wellbeing 3-4, Bathroom 4-6 | Severe: Wellbeing ≥4, Bathroom ≥6', 20, yPos + 50);
+            doc.text('Scale: 1=Good, 5=Very Bad', 20, yPos + chartHeight + 5);
             
-            yPos += 65;
+            yPos += chartHeight + 15;
             
-            // SYMPTOM FREQUENCY SECTION
-            setColor(primaryColor);
-            doc.setFontSize(12);
+            // Symptom Frequency
+            if (yPos > 240) { doc.addPage(); yPos = 20; }
+            
+            setColor(colors.primary);
+            doc.setFontSize(11);
             doc.setFont(undefined, 'bold');
-            doc.text('SYMPTOM FREQUENCY (Last 14 Days)', 20, yPos);
-            
+            doc.text('SYMPTOM FREQUENCY', 20, yPos);
             yPos += 8;
             
-            // Calculate symptom frequencies
             const symptomCounts = {};
-            const symptoms = ['pain', 'blood', 'urgency', 'fatigue', 'nausea', 'appetite'];
-            symptoms.forEach(s => symptomCounts[s] = 0);
-            
+            const symptoms = [
+                { key: 'pain', label: 'Pain' },
+                { key: 'blood', label: 'Blood' },
+                { key: 'urgency', label: 'Urgency' },
+                { key: 'fatigue', label: 'Fatigue' },
+                { key: 'nausea', label: 'Nausea' },
+                { key: 'appetite', label: 'Low Appetite' }
+            ];
+            symptoms.forEach(s => symptomCounts[s.key] = 0);
             recentEntries.forEach(e => {
-                if (e.symptoms) {
-                    symptoms.forEach(s => {
-                        if (e.symptoms[s] && e.symptoms[s].active) symptomCounts[s]++;
-                    });
-                }
+                if (e.symptoms) symptoms.forEach(s => { if (e.symptoms[s.key] && e.symptoms[s.key].active) symptomCounts[s.key]++; });
             });
             
-            // Draw symptom bars
-            const barMaxWidth = 100;
-            doc.setFontSize(9);
-            
+            const maxBarWidth = 100;
             symptoms.forEach((symptom, i) => {
-                const count = symptomCounts[symptom];
+                const count = symptomCounts[symptom.key];
                 const percentage = (count / recentEntries.length) * 100;
-                const barWidth = (percentage / 100) * barMaxWidth;
+                const barWidth = (percentage / 100) * maxBarWidth;
+                const rowY = yPos + i * 12;
                 
-                const y = yPos + (i * 10);
+                setColor(colors.text);
+                doc.setFontSize(9);
+                doc.text(symptom.label, 20, rowY + 4);
                 
-                // Symptom name
-                setColor(secondaryColor);
-                doc.setFont(undefined, 'normal');
-                doc.text(symptom.charAt(0).toUpperCase() + symptom.slice(1), 20, y);
+                setFill([230, 230, 230]);
+                doc.roundedRect(70, rowY - 2, maxBarWidth, 8, 2, 2, 'F');
                 
-                // Background bar
-                doc.setFillColor(230, 230, 230);
-                doc.rect(60, y - 4, barMaxWidth, 6, 'F');
-                
-                // Value bar
-                if (percentage > 50) {
-                    doc.setFillColor(alertColor[0], alertColor[1], alertColor[2]);
-                } else if (percentage > 25) {
-                    doc.setFillColor(243, 156, 18);
-                } else {
-                    doc.setFillColor(successColor[0], successColor[1], successColor[2]);
+                if (percentage > 0) {
+                    if (percentage > 50) setFill(colors.danger);
+                    else if (percentage > 25) setFill(colors.warning);
+                    else setFill(colors.success);
+                    doc.roundedRect(70, rowY - 2, barWidth, 8, 2, 2, 'F');
                 }
-                doc.rect(60, y - 4, barWidth, 6, 'F');
                 
-                // Percentage text
-                setColor(secondaryColor);
-                doc.text(count + ' days (' + percentage.toFixed(0) + '%)', 165, y);
+                setColor(colors.text);
+                doc.setFontSize(8);
+                doc.text(count + ' days', 175, rowY + 4);
+                setColor(colors.textLight);
+                doc.setFontSize(7);
+                doc.text('(' + percentage.toFixed(0) + '%)', 195, rowY + 4);
             });
             
-            yPos += 75;
+            yPos += symptoms.length * 12 + 10;
             
-            // TRIGGER ANALYSIS
-            if (yPos > 230) {
-                doc.addPage();
-                yPos = 20;
-            }
+            // Bristol Stool Distribution
+            if (yPos > 240) { doc.addPage(); yPos = 20; }
             
-            setColor(primaryColor);
-            doc.setFontSize(12);
+            setColor(colors.primary);
+            doc.setFontSize(11);
             doc.setFont(undefined, 'bold');
-            doc.text('POTENTIAL TRIGGER ANALYSIS', 20, yPos);
-            
+            doc.text('BRISTOL STOOL SCALE DISTRIBUTION', 20, yPos);
             yPos += 8;
             
-            // Calculate trigger correlations
-            const triggerAnalysis = [];
-            const triggerTypes = ['stress', 'sleep', 'alcohol', 'dairy', 'spicy', 'nsaids', 'antibiotics', 'travel'];
-            const triggerNames = {
-                stress: 'Stress',
-                sleep: 'Poor Sleep',
-                alcohol: 'Alcohol',
-                dairy: 'Dairy Products',
-                spicy: 'Spicy Foods',
-                nsaids: 'NSAIDs',
-                antibiotics: 'Antibiotics',
-                travel: 'Travel'
-            };
+            const bristolCounts = {};
+            recentEntries.forEach(e => { if (e.bristol) bristolCounts[e.bristol] = (bristolCounts[e.bristol] || 0) + 1; });
             
+            const bristolTypes = [1, 2, 3, 4, 5, 6, 7];
+            const barW = 20, maxH = 30;
+            const maxCount = Math.max(...Object.values(bristolCounts), 1);
+            
+            bristolTypes.forEach((type, i) => {
+                const count = bristolCounts[type] || 0;
+                const height = (count / maxCount) * maxH;
+                const x = 25 + i * 25;
+                
+                if (count > 0) {
+                    if (type <= 2) setFill([139, 69, 19]);
+                    else if (type <= 4) setFill(colors.success);
+                    else setFill([70, 130, 180]);
+                    doc.roundedRect(x, yPos + maxH - height, barW, height, 2, 2, 'F');
+                } else {
+                    setFill([240, 240, 240]);
+                    doc.roundedRect(x, yPos + maxH - 2, barW, 2, 1, 1, 'F');
+                }
+                
+                setColor(colors.text);
+                doc.setFontSize(8);
+                doc.setFont(undefined, 'bold');
+                doc.text(type.toString(), x + 7, yPos + maxH + 8);
+                
+                if (count > 0) {
+                    setColor(colors.text);
+                    doc.setFontSize(7);
+                    doc.text(count.toString(), x + 7, yPos + maxH - height - 3);
+                }
+            });
+            
+            yPos += maxH + 20;
+            setColor(colors.textLight);
+            doc.setFontSize(7);
+            doc.text('Types 1-2: Constipation | Types 3-4: Normal | Types 5-7: Diarrhea', 20, yPos);
+            
+            yPos += 15;
+            
+            // Trigger Analysis
+            if (yPos > 220) { doc.addPage(); yPos = 20; }
+            
+            setColor(colors.primary);
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text('TRIGGER ANALYSIS', 20, yPos);
+            yPos += 8;
+            
+            const triggerTypes = ['stress', 'sleep', 'alcohol', 'dairy', 'spicy', 'nsaids'];
+            const triggerNames = { stress: 'Stress', sleep: 'Poor Sleep', alcohol: 'Alcohol', dairy: 'Dairy', spicy: 'Spicy Foods', nsaids: 'NSAIDs' };
+            
+            const triggerData = [];
             triggerTypes.forEach(trigger => {
                 const withTrigger = recentEntries.filter(e => e.triggers && e.triggers[trigger] && e.triggers[trigger].active);
-                if (withTrigger.length >= 2) {
+                if (withTrigger.length >= 1) {
                     const avgWellbeingWith = withTrigger.reduce((sum, e) => sum + (e.wellbeing || 3), 0) / withTrigger.length;
-                    const avgBathroomWith = withTrigger.reduce((sum, e) => sum + (e.bathroomCount || 0), 0) / withTrigger.length;
-                    
-                    const withoutTrigger = recentEntries.filter(e => !e.triggers || !e.triggers[trigger] || !e.triggers[trigger].active);
-                    const avgWellbeingWithout = withoutTrigger.reduce((sum, e) => sum + (e.wellbeing || 3), 0) / withoutTrigger.length;
-                    
-                    const wellbeingDiff = avgWellbeingWith - avgWellbeingWithout;
-                    
-                    if (wellbeingDiff > 0.5) {
-                        triggerAnalysis.push({
-                            name: triggerNames[trigger],
-                            days: withTrigger.length,
-                            wellbeingImpact: wellbeingDiff.toFixed(1),
-                            avgBathroom: avgBathroomWith.toFixed(1)
-                        });
-                    }
+                    triggerData.push({ name: triggerNames[trigger], days: withTrigger.length, impact: avgWellbeingWith, correlation: withTrigger.length / recentEntries.length });
                 }
             });
             
-            if (triggerAnalysis.length > 0) {
-                doc.setFontSize(9);
-                triggerAnalysis.forEach((t, i) => {
-                    const y = yPos + (i * 12);
+            if (triggerData.length > 0) {
+                triggerData.sort((a, b) => b.impact - a.impact);
+                triggerData.forEach((t, i) => {
+                    if (yPos > 270) { doc.addPage(); yPos = 20; }
+                    const rowY = yPos + i * 14;
+                    const impactColor = t.impact >= 3.5 ? colors.danger : t.impact >= 2.5 ? colors.warning : colors.success;
+                    setFill(impactColor);
+                    doc.circle(22, rowY + 2, 3, 'F');
                     
-                    setColor(primaryColor);
+                    setColor(colors.text);
+                    doc.setFontSize(9);
                     doc.setFont(undefined, 'bold');
-                    doc.text(t.name, 20, y);
+                    doc.text(t.name, 30, rowY + 4);
                     
-                    setColor(secondaryColor);
+                    setColor(colors.textLight);
+                    doc.setFontSize(8);
                     doc.setFont(undefined, 'normal');
-                    doc.text('Present on ' + t.days + ' days. Wellbeing ' + t.wellbeingImpact + ' points lower. Avg ' + t.avgBathroom + ' bathroom visits.', 20, y + 5);
+                    doc.text('Present on ' + t.days + ' days (' + (t.correlation * 100).toFixed(0) + '%)', 30, rowY + 12);
+                    
+                    setColor(impactColor);
+                    doc.setFontSize(9);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Impact: ' + t.impact.toFixed(1), 170, rowY + 4);
                 });
-                yPos += triggerAnalysis.length * 12 + 10;
+                yPos += triggerData.length * 14 + 10;
             } else {
-                setColor(secondaryColor);
+                setColor(colors.textLight);
                 doc.setFontSize(9);
-                doc.text('No strong trigger correlations detected in the tracking period.', 20, yPos);
+                doc.text('No trigger data available for the tracking period.', 20, yPos);
                 yPos += 10;
             }
             
-            // DAILY LOG TABLE
-            if (yPos > 200) {
-                doc.addPage();
-                yPos = 20;
-            }
+            // Daily Log Table
+            doc.addPage();
+            yPos = 20;
             
-            setColor(primaryColor);
-            doc.setFontSize(12);
+            setColor(colors.primary);
+            doc.setFontSize(11);
             doc.setFont(undefined, 'bold');
-            doc.text('DAILY CLINICAL LOG', 20, yPos);
-            
-            yPos += 10;
-            
-            // Table header
-            doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.rect(15, yPos - 5, 180, 8, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(8);
-            doc.text('Date', 18, yPos);
-            doc.text('Wellbeing', 45, yPos);
-            doc.text('Mood', 70, yPos);
-            doc.text('Bathroom', 90, yPos);
-            doc.text('Bristol', 115, yPos);
-            doc.text('Symptoms', 135, yPos);
-            doc.text('Notes', 165, yPos);
-            
+            doc.text('DAILY LOG', 20, yPos);
             yPos += 8;
             
-            // Table rows
-            const tableEntries = allEntries.slice(0, 21); // Last 21 days
+            setFill(colors.primary);
+            doc.rect(15, yPos - 5, 180, 8, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(7);
+            doc.text('Date', 18, yPos);
+            doc.text('Wellbeing', 40, yPos);
+            doc.text('Bathroom', 65, yPos);
+            doc.text('Bristol', 88, yPos);
+            doc.text('Symptoms', 108, yPos);
+            doc.text('Notes', 155, yPos);
+            yPos += 8;
             
+            const tableEntries = allEntries.slice(0, 28);
             tableEntries.forEach((entry, i) => {
                 if (yPos > 280) {
                     doc.addPage();
                     yPos = 20;
-                    // Redraw header
-                    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                    setFill(colors.primary);
                     doc.rect(15, yPos - 5, 180, 8, 'F');
                     doc.setTextColor(255, 255, 255);
                     doc.text('Date', 18, yPos);
-                    doc.text('Wellbeing', 45, yPos);
-                    doc.text('Mood', 70, yPos);
-                    doc.text('Bathroom', 90, yPos);
-                    doc.text('Bristol', 115, yPos);
-                    doc.text('Symptoms', 135, yPos);
-                    doc.text('Notes', 165, yPos);
+                    doc.text('Wellbeing', 40, yPos);
+                    doc.text('Bathroom', 65, yPos);
+                    doc.text('Bristol', 88, yPos);
+                    doc.text('Symptoms', 108, yPos);
+                    doc.text('Notes', 155, yPos);
                     yPos += 8;
                 }
                 
-                // Alternate row colors
                 if (i % 2 === 0) {
-                    doc.setFillColor(250, 250, 250);
+                    setFill([248, 249, 250]);
                     doc.rect(15, yPos - 4, 180, 6, 'F');
                 }
                 
-                const date = new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                
-                // Get active symptoms
+                const date = new Date(entry.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
                 let activeSymptoms = [];
                 if (entry.symptoms) {
-                    for (let key in entry.symptoms) {
-                        if (entry.symptoms[key].active) activeSymptoms.push(key.substring(0, 3));
-                    }
+                    if (entry.symptoms.pain?.active) activeSymptoms.push('Pain');
+                    if (entry.symptoms.blood?.active) activeSymptoms.push('Blood');
+                    if (entry.symptoms.urgency?.active) activeSymptoms.push('Urg');
+                    if (entry.symptoms.fatigue?.active) activeSymptoms.push('Fat');
+                    if (entry.symptoms.nausea?.active) activeSymptoms.push('Nau');
+                    if (entry.symptoms.appetite?.active) activeSymptoms.push('App');
                 }
                 
-                setColor(secondaryColor);
-                doc.setFontSize(7);
-                doc.text(date, 18, yPos);
-                doc.text((entry.wellbeing || '-').toString(), 50, yPos);
-                doc.text((entry.mood || '-').toString(), 75, yPos);
-                doc.text((entry.bathroomCount || 0).toString(), 97, yPos);
-                doc.text((entry.bristol || '-').toString(), 118, yPos);
-                doc.text(activeSymptoms.join(', ') || 'None', 135, yPos);
+                const wbColor = entry.wellbeing ? (entry.wellbeing <= 2 ? colors.success : entry.wellbeing <= 3 ? colors.warning : colors.danger) : colors.textLight;
                 
-                // Truncate notes
-                const notes = entry.notes ? entry.notes.substring(0, 20) + (entry.notes.length > 20 ? '...' : '') : '';
-                doc.text(notes, 165, yPos);
+                setColor(colors.text);
+                doc.setFontSize(6);
+                doc.text(date, 18, yPos);
+                
+                setColor(wbColor);
+                doc.setFont(undefined, 'bold');
+                doc.text(entry.wellbeing ? entry.wellbeing.toString() : '-', 45, yPos);
+                
+                setColor(colors.text);
+                doc.setFont(undefined, 'normal');
+                doc.text((entry.bathroomCount || 0).toString(), 70, yPos);
+                doc.text((entry.bristol || '-').toString(), 92, yPos);
+                
+                const symText = activeSymptoms.join(', ') || 'None';
+                if (activeSymptoms.length > 0) setColor(colors.danger);
+                else setColor(colors.success);
+                doc.text(symText.substring(0, 20), 108, yPos);
+                
+                setColor(colors.textLight);
+                const notes = entry.notes ? entry.notes.substring(0, 25) + (entry.notes.length > 25 ? '...' : '') : '';
+                doc.text(notes, 155, yPos);
                 
                 yPos += 6;
             });
             
-            // FOOTER
-            doc.setDrawColor(200, 200, 200);
+            // Footer
+            doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
             doc.line(15, 285, 195, 285);
-            setColor(secondaryColor);
-            doc.setFontSize(8);
-            doc.text('Generated by UC Companion - This report is for informational purposes only and does not replace professional medical advice.', 20, 292);
+            setColor(colors.textLight);
+            doc.setFontSize(7);
+            doc.setFont(undefined, 'normal');
+            doc.text('UC Companion - For informational purposes only. Not a substitute for professional medical advice.', 20, 292);
+            doc.text('Page ' + doc.internal.getNumberOfPages(), 180, 292);
             
-            // Save
-            doc.save('UC-Clinical-Report-' + new Date().toISOString().split('T')[0] + '.pdf');
+            doc.save('UC-Report-' + new Date().toISOString().split('T')[0] + '.pdf');
         }
                 
                 doc.setFont(undefined, 'normal');
@@ -1518,8 +1599,16 @@
                 }
                 
                 if (entry.bristol) {
-                    const bristolTypes = ['', 'Severe constipation', 'Mild constipation', 'Normal', 'Normal (ideal)', 'Lacking fiber', 'Mild diarrhea', 'Severe diarrhea'];
-                    doc.text('Stool: Type ' + entry.bristol + ' - ' + bristolTypes[entry.bristol], 20, yPos);
+                    const bristolTypes = ['', 
+                        'Type 1: Hard lumps (severe constipation)', 
+                        'Type 2: Lumpy sausage (mild constipation)', 
+                        'Type 3: Cracked sausage (normal)', 
+                        'Type 4: Smooth sausage (normal - ideal)', 
+                        'Type 5: Soft blobs (low fiber - edges not formed)', 
+                        'Type 6: Fluffy pieces (mild diarrhea)', 
+                        'Type 7: Watery (severe diarrhea)'
+                    ];
+                    doc.text('Stool: ' + bristolTypes[entry.bristol], 20, yPos);
                     yPos += 6;
                 }
                 
@@ -1690,15 +1779,15 @@
                 document.getElementById('bristol-' + i).classList.toggle('active', i === type);
             }
             
-            // Show selected text
+            // Show selected text with clearer descriptions
             const bristolLabels = {
-                1: 'Type 1: Separate hard lumps (severe constipation)',
-                2: 'Type 2: Lumpy sausage shape (mild constipation)',
-                3: 'Type 3: Cracked surface sausage (normal)',
-                4: 'Type 4: Smooth soft sausage (normal - ideal)',
-                5: 'Type 5: Soft blobs with edges (lacking fiber)',
-                6: 'Type 6: Fluffy pieces (mild diarrhea)',
-                7: 'Type 7: Watery, no solids (severe diarrhea)'
+                1: 'Type 1: Hard lumps (severe constipation - difficult to pass)',
+                2: 'Type 2: Lumpy sausage (mild constipation - some straining)',
+                3: 'Type 3: Cracked sausage (normal - easy to pass)',
+                4: 'Type 4: Smooth sausage (normal/ideal - easiest to pass)',
+                5: 'Type 5: Soft blobs (lacking fiber - edges not well formed)',
+                6: 'Type 6: Fluffy pieces (mild diarrhea - urgent, messy)',
+                7: 'Type 7: Watery (severe diarrhea - no solid pieces)'
             };
             
             document.getElementById('bristolSelected').style.display = 'block';
