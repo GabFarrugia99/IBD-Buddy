@@ -1,4 +1,4 @@
-const CACHE_NAME = 'uc-companion-v1';
+const CACHE_NAME = 'uc-companion-v2';
 const urlsToCache = [
   '/IBD-Buddy/',
   '/IBD-Buddy/index.html',
